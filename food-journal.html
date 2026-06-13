@@ -923,9 +923,9 @@ function selFull(val){
 function saveEntry(){
   const text=(document.getElementById("panelTextarea").value||"").trim();
   if(!text){showToast("Type what you ate first.","error");return;}
-  if(!panelFullness){showToast("Did you feel full, or want more?","error");return;}
+  if(!panelFullness){}// fullness is optional
   const day=getDayData(viewDate),time=new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
-  day.meals[panelMealId].push({food:text,fullness:panelFullness,time});
+  day.meals[panelMealId].push({food:text,fullness:panelFullness||null,time});
   saveData();showToast("Logged! \uD83D\uDC4D","success");openPanel(panelMealId);syncToDropbox();
 }
 function deleteEntry(mealId,idx){getDayData(viewDate).meals[mealId].splice(idx,1);saveData();openPanel(mealId);}
