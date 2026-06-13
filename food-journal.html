@@ -636,10 +636,10 @@ async function handleOAuthCallback(){
   const params=new URLSearchParams(window.location.search);
   const code=params.get("code");
   const state=params.get("state");
+  // Always clean the URL if there are OAuth params, even if we don't use them
+  if(code||state){history.replaceState(null,"",REDIRECT_URI);}
   if(!code||!state||state!==localStorage.getItem("fj_dbx_state"))return false;
   localStorage.removeItem("fj_dbx_state");
-  history.replaceState(null,"",REDIRECT_URI);
-  // Exchange code for tokens via worker
   showSyncBar(true,"Connecting to Dropbox...");
   try{
     const res=await fetch(WORKER_URL+"/token",{
@@ -663,11 +663,13 @@ async function handleOAuthCallback(){
 }
 window.addEventListener("DOMContentLoaded",async()=>{
   const fromOAuth=await handleOAuthCallback();
+  // Always show the app if we have a token — don't let a failed OAuth block the app
   if(getRefreshToken()||getToken()){
     showApp();
     if(fromOAuth){showToast("Dropbox connected! Syncing...","success");setTimeout(()=>syncToDropbox(),800);}
     else{pullFromDropbox();}
   }
+  // If no token at all, the setup screen stays visible (normal first-time flow)
 });
 function skipSetup(){showApp();}
 function showApp(){
