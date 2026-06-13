@@ -173,7 +173,7 @@
 
 <div id="setupScreen" class="setup-screen">
   <div class="setup-card">
-    <div class="logo">&#x1F957;</div>
+    <div class="logo">&#x1F985;</div>
     <h2>Mike's Vault</h2>
     <p>Your personal vault. Food, health, movies, and more — all in one place.</p>
     <button class="btn btn-blue" style="width:100%;justify-content:center;padding:13px;font-size:15px;margin-bottom:4px;" onclick="startDropboxOAuth()">Connect Dropbox</button>
@@ -184,7 +184,7 @@
 <div id="appMain" class="hidden">
   <header class="app-header">
     <div class="brand">
-      <span style="font-size:22px">&#x1F957;</span>
+      <span style="font-size:22px">&#x1F985;</span>
       <div><h1>Mike's Vault</h1><div class="sub">Your life. Logged.</div></div>
     </div>
     <div class="header-right">
@@ -444,41 +444,71 @@ function showApp(){
 async function pullFromDropbox(){
   const token=getToken();
   if(!token)return;
+  showSyncBar(true,"Checking Dropbox for latest data...");
   try{
     const res=await fetch("https://content.dropboxapi.com/2/files/download",{
       method:"POST",
       headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE})}
     });
-    if(!res.ok)return;
+    if(res.status===409){showSyncBar(true,"No Dropbox data yet \u2014 starting fresh");return;}
+    if(!res.ok){showSyncBar(false,"Could not load from Dropbox ("+res.status+")");return;}
     const remote=await res.json();
+    if(!remote||typeof remote!=="object"){showSyncBar(false,"Invalid data from Dropbox");return;}
     const local=data;
     const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[]};
+    // Merge days - for each day pick the version with more water OR more meal entries OR closed status
     const allDays=new Set([...Object.keys(local.days||{}),...Object.keys(remote.days||{})]);
     allDays.forEach(d=>{
       const ld=local.days[d],rd=remote.days[d];
-      if(!ld)merged.days[d]=rd;
-      else if(!rd)merged.days[d]=ld;
-      else{
-        const lcount=Object.values(ld.meals||{}).reduce((a,b)=>a+b.length,0);
-        const rcount=Object.values(rd.meals||{}).reduce((a,b)=>a+b.length,0);
-        merged.days[d]=rcount>=lcount?rd:ld;
-      }
+      if(!ld){merged.days[d]=rd;return;}
+      if(!rd){merged.days[d]=ld;return;}
+      // Build merged day taking best of each field
+      const lcount=Object.values(ld.meals||{}).reduce((a,b)=>a+b.length,0);
+      const rcount=Object.values(rd.meals||{}).reduce((a,b)=>a+b.length,0);
+      const winner=rcount>=lcount?rd:ld;
+      merged.days[d]={
+        ...winner,
+        water:Math.max(ld.water||0,rd.water||0),
+        mood:rd.mood||ld.mood,
+        closed:rd.closed||ld.closed,
+        reflection:rd.reflection||ld.reflection,
+        trt:Object.assign({},ld.trt||{},rd.trt||{})
+      };
     });
+    // Merge weight
     const wSeen=new Set();
     [...(local.weight||[]),...(remote.weight||[])].forEach(w=>{
       const key=w.date+"-"+w.weight;
       if(!wSeen.has(key)){wSeen.add(key);merged.weight.push(w);}
     });
     merged.weight.sort((a,b)=>b.date.localeCompare(a.date));
+    // Merge watchlist
     const wlSeen=new Set();
-    [...(local.watchlist||[]),...(remote.watchlist||[])].forEach(i=>{
+    [...(remote.watchlist||[]),...(local.watchlist||[])].forEach(i=>{
       if(!wlSeen.has(i.id)){wlSeen.add(i.id);merged.watchlist.push(i);}
     });
     data=merged;
     localStorage.setItem("fj_data",JSON.stringify(data));
-    renderToday();updateStreak();
-    showSyncBar(true,"Loaded latest from Dropbox \u00B7 "+new Date().toLocaleTimeString());
-  }catch(e){}
+    renderToday();updateStreak();checkWeightNag();
+    if(data.goalWeight)document.getElementById("goalWeightInput").value=data.goalWeight;
+    showSyncBar(true,"Synced from Dropbox \u00B7 "+new Date().toLocaleTimeString());
+    // Push merged data back so both devices stay in sync
+    await pushToDropbox();
+  }catch(e){
+    showSyncBar(false,"Sync error: "+e.message);
+  }
+}
+async function pushToDropbox(){
+  const token=getToken();
+  if(!token)return;
+  try{
+    const res=await fetch("https://content.dropboxapi.com/2/files/upload",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/octet-stream","Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE,mode:"overwrite",autorename:false,mute:true})},
+      body:JSON.stringify(data,null,2)
+    });
+    return res.ok;
+  }catch{return false;}
 }
 function updateToken(){
   const t=document.getElementById("settingsToken").value.trim();
@@ -705,15 +735,8 @@ function renderHistory(){
 async function syncToDropbox(){
   const token=getToken();
   if(!token){showSyncBar(false,"No token \u2014 saved locally only");return;}
-  try{
-    const res=await fetch("https://content.dropboxapi.com/2/files/upload",{
-      method:"POST",
-      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/octet-stream","Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE,mode:"overwrite",autorename:false,mute:true})},
-      body:JSON.stringify(data,null,2)
-    });
-    if(res.ok)showSyncBar(true,"Synced to Dropbox \u00B7 "+new Date().toLocaleTimeString());
-    else{const e=await res.json().catch(()=>({}));showSyncBar(false,"Sync failed: "+(e?.error_summary||"unknown"));}
-  }catch{showSyncBar(false,"Sync error \u2014 saved locally");}
+  // Full two-way sync: pull first, merge, then push
+  await pullFromDropbox();
 }
 function showSyncBar(ok,msg){
   const bar=document.getElementById("syncBar");
