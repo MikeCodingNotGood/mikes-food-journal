@@ -150,10 +150,6 @@
   .toast.toast-blue{background:var(--blue-dim);border-color:rgba(59,130,246,0.3);color:var(--blue);}
   .cat-btn{padding:8px 10px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid var(--border2);cursor:pointer;background:var(--bg3);color:var(--text2);transition:all 0.15s;font-family:var(--font);text-align:center;}
   .cat-btn:hover,.cat-btn.sel{border-color:var(--blue);background:var(--blue-dim);color:var(--blue);}
-  .settings-tag-wrap{display:flex;flex-wrap:wrap;gap:7px;}
-  .settings-tag{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border2);background:var(--bg3);color:var(--text);}
-  .settings-tag-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0;line-height:1;margin-left:2px;}
-  .settings-tag-x:hover{color:var(--red);}
   .wl-group{margin-bottom:20px;}
   .wl-group-header{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text2);margin-bottom:8px;}
   .wl-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:6px;display:flex;align-items:flex-start;gap:12px;}
@@ -179,32 +175,7 @@
   .wstat .wsv{font-size:18px;font-weight:700;line-height:1;}
   .wstat .wsl{font-size:10px;color:var(--text2);margin-top:4px;}
   .hidden{display:none!important;}
-  /* Health Tab */
-  .health-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
-  .health-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
-  .health-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;}
-  .hc-teal{color:#06b6d4;} .hc-orange{color:#f97316;}
-  .sleep-quality-btns{display:flex;gap:8px;margin:10px 0;}
-  .sq-btn{flex:1;padding:8px 6px;border-radius:10px;font-size:12px;font-weight:600;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text2);transition:all 0.15s;font-family:var(--font);text-align:center;}
-  .sq-btn:hover{border-color:#06b6d4;color:#06b6d4;}
-  .sq-btn.sel-great{border-color:#10b981;background:var(--green-dim);color:#10b981;}
-  .sq-btn.sel-okay{border-color:#f59e0b;background:var(--amber-dim);color:#f59e0b;}
-  .sq-btn.sel-rough{border-color:#ef4444;background:var(--red-dim);color:#ef4444;}
-  .time-inputs{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
-  .time-inputs span{font-size:12px;color:var(--text2);}
-  .activity-type-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;}
-  .act-btn{padding:7px 4px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text2);transition:all 0.15s;font-family:var(--font);text-align:center;}
-  .act-btn:hover,.act-btn.sel{border-color:#f97316;background:rgba(249,115,22,0.15);color:#f97316;}
-  .health-log-item{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--bg3);border-radius:8px;font-size:13px;margin-bottom:6px;}
-  .health-log-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 5px;border-radius:4px;font-size:13px;}
-  .health-log-del:hover{background:var(--red-dim);color:var(--red);}
-  .hday-dot{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1px solid var(--border);color:var(--text3);}
-  .hday-dot.ex-done{background:rgba(249,115,22,0.2);border-color:#f97316;color:#f97316;}
-  .hday-dot.sl-great{background:var(--green-dim);border-color:#10b981;color:#10b981;}
-  .hday-dot.sl-okay{background:var(--amber-dim);border-color:#f59e0b;color:#f59e0b;}
-  .hday-dot.sl-rough{background:var(--red-dim);border-color:#ef4444;color:#ef4444;}
-  .health-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
-  @media(max-width:600px){.main{padding:14px 12px;}.hero-stats{grid-template-columns:repeat(2,1fr);}.tracker-row{grid-template-columns:1fr;}.meal-grid{grid-template-columns:repeat(2,1fr);}.health-grid{grid-template-columns:1fr;}}
+  @media(max-width:600px){.main{padding:14px 12px;}.hero-stats{grid-template-columns:repeat(2,1fr);}.tracker-row{grid-template-columns:1fr;}.meal-grid{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
 <body>
@@ -236,7 +207,6 @@
   <div class="nav-tabs">
     <div class="nav-tab active" id="tab-today"    onclick="showTab('today')">Food</div>
     <div class="nav-tab"        id="tab-watchlist" onclick="showTab('watchlist')">Random</div>
-    <div class="nav-tab"        id="tab-health"   onclick="showTab('health')">Health</div>
     <div class="nav-tab"        id="tab-weight"   onclick="showTab('weight')">Weight</div>
     <div class="nav-tab"        id="tab-history"  onclick="showTab('history')">History</div>
     <div class="nav-tab"        id="tab-settings" onclick="showTab('settings')">Settings</div>
@@ -292,87 +262,17 @@
     </div>
     <div class="quick-add-row">
       <div class="qa-label">Quick add</div>
-      <div class="qa-chips" id="qaChips"></div>
+      <div class="qa-chips">
+        <button class="qa-chip" onclick="quickAdd('Eggs and breakfast')">&#x1F373; Eggs &amp; breakfast</button>
+        <button class="qa-chip" onclick="quickAdd('Turkey sandwich')">&#x1F96A; Turkey sandwich</button>
+        <button class="qa-chip" onclick="quickAdd('Protein shake')">&#x1F964; Protein shake</button>
+        <button class="qa-chip" onclick="quickAdd('Deli meat and cheese')">&#x1F9C0; Deli meat &amp; cheese</button>
+        <button class="qa-chip" onclick="quickAdd('Sandwich')">&#x1F35E; Sandwich</button>
+        <button class="qa-chip" onclick="quickAdd('Protein bar')">&#x1F36B; Protein bar</button>
+      </div>
     </div>
     <div class="meal-grid" id="mealGrid"></div>
     <button class="close-day-btn" onclick="closeDay()">&#x2705; Close Out Today &amp; Reflect</button>
-  </div>
-
-  <div id="page-health" class="main hidden">
-    <div class="date-bar"><div><h2>Health</h2><div class="date-sub">Sleep &amp; Exercise</div></div></div>
-
-    <!-- Stats row -->
-    <div class="health-stat-row">
-      <div class="hero-stat"><div class="hv" style="color:#06b6d4" id="hStatSleep">&mdash;</div><div class="hl">Avg Hours Slept (7 days)</div></div>
-      <div class="hero-stat"><div class="hv" style="color:#f97316" id="hStatWorkouts">&mdash;</div><div class="hl">Workouts This Week</div></div>
-      <div class="hero-stat"><div class="hv" style="color:#10b981" id="hStatStreak">&mdash;</div><div class="hl">Exercise Streak</div></div>
-    </div>
-
-    <!-- Two column cards -->
-    <div class="health-grid">
-
-      <!-- SLEEP -->
-      <div class="health-card">
-        <div class="health-card-title hc-teal">&#x1F4A4; Sleep Log</div>
-        <div class="time-inputs">
-          <div>
-            <div style="font-size:10px;color:var(--text2);margin-bottom:4px">Bedtime</div>
-            <input type="time" id="sleepBedtime" class="dark-input" style="width:110px;padding:6px 8px;font-size:13px" />
-          </div>
-          <span style="margin-top:16px">&#8594;</span>
-          <div>
-            <div style="font-size:10px;color:var(--text2);margin-bottom:4px">Wake time</div>
-            <input type="time" id="sleepWake" class="dark-input" style="width:110px;padding:6px 8px;font-size:13px" />
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">How did you sleep?</div>
-        <div class="sleep-quality-btns">
-          <button class="sq-btn" data-q="great" onclick="selSleepQuality('great')">&#x1F60A; Great</button>
-          <button class="sq-btn" data-q="okay"  onclick="selSleepQuality('okay')">&#x1F610; Okay</button>
-          <button class="sq-btn" data-q="rough" onclick="selSleepQuality('rough')">&#x1F629; Rough</button>
-        </div>
-        <button class="btn btn-blue btn-sm" style="width:100%;justify-content:center;margin-top:4px" onclick="saveSleep()">Log Sleep</button>
-        <div style="margin-top:14px" id="sleepLogList"></div>
-      </div>
-
-      <!-- EXERCISE -->
-      <div class="health-card">
-        <div class="health-card-title hc-orange">&#x1F3CB;&#xFE0F; Exercise Log</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Activity type</div>
-        <div class="activity-type-grid" id="actTypeGrid">
-          <button class="act-btn" data-t="Gym"      onclick="selActType(this)">Gym</button>
-          <button class="act-btn" data-t="Walk"     onclick="selActType(this)">Walk</button>
-          <button class="act-btn" data-t="Run"      onclick="selActType(this)">Run</button>
-          <button class="act-btn" data-t="Bike"     onclick="selActType(this)">Bike</button>
-          <button class="act-btn" data-t="Swim"     onclick="selActType(this)">Swim</button>
-          <button class="act-btn" data-t="Other"    onclick="selActType(this)">Other</button>
-        </div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Duration (minutes)</div>
-        <input type="number" id="exDuration" class="dark-input" placeholder="e.g. 45" min="1" max="300" style="width:100%;margin-bottom:10px" />
-        <button class="btn btn-blue btn-sm" style="width:100%;justify-content:center" onclick="saveExercise()">Log Workout</button>
-        <div style="margin-top:14px" id="exerciseLogList"></div>
-      </div>
-    </div>
-
-    <!-- Unified Sleep / Workout chart -->
-    <div class="section-card">
-      <div class="section-head" style="flex-wrap:wrap;gap:8px">
-        <div style="display:flex;gap:6px">
-          <button class="chart-range-btn active" id="hChartToggleSleep" onclick="setHealthChartView('sleep',this)">&#x1F4A4; Sleep</button>
-          <button class="chart-range-btn" id="hChartToggleEx" onclick="setHealthChartView('exercise',this)">&#x1F3CB;&#xFE0F; Workouts</button>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap" id="hChartRangeBtns">
-          <button class="chart-range-btn active" data-r="30" onclick="setHealthChartRange(30,this)">30 days</button>
-          <button class="chart-range-btn"        data-r="60" onclick="setHealthChartRange(60,this)">60 days</button>
-          <button class="chart-range-btn"        data-r="90" onclick="setHealthChartRange(90,this)">90 days</button>
-          <button class="chart-range-btn"        data-r="0"  onclick="setHealthChartRange(0,this)">All time</button>
-        </div>
-      </div>
-      <div class="section-body" style="padding:12px 12px 16px">
-        <canvas id="healthChart" style="width:100%;max-height:240px"></canvas>
-        <div id="healthChartEmpty" style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;padding:40px 0;display:none">Nothing logged yet — start tracking to see your chart.</div>
-      </div>
-    </div>
   </div>
 
   <div id="page-history" class="main hidden">
@@ -448,22 +348,7 @@
         </div>
       </div>
       <div class="settings-row"><span>Sync now</span><button class="btn btn-blue btn-sm" onclick="syncToDropbox()">Sync</button></div>
-      <div class="settings-row"><span>Token expired?</span><button class="btn btn-ghost btn-sm" onclick="startDropboxOAuth()">&#x1F504; Reconnect Dropbox</button></div>
       <div class="settings-row"><span id="dropboxStatus" style="font-size:13px;color:var(--text2)">&#8212;</span></div>
-    </div>
-    <div class="settings-section">
-      <h3>Quick Add Items</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Add or remove items that appear in the Quick Add bar on the Food tab.</p>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <input type="text" id="qaNewItem" class="dark-input" placeholder="e.g. Greek yogurt" style="flex:1" />
-        <button class="btn btn-blue btn-sm" onclick="addQuickAddItem()">+ Add</button>
-      </div>
-      <div id="qaSettingsList"></div>
-    </div>
-    <div class="settings-section">
-      <h3>Manage Categories</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Remove any category you don't want. Items already saved under it are never deleted.</p>
-      <div id="manageCatsList"></div>
     </div>
     <div class="settings-section">
       <h3>Data</h3>
@@ -477,14 +362,16 @@
   <div class="modal">
     <h3>Add to My List</h3>
     <p>Pick a category, add a title, and optionally who told you about it.</p>
-    <div style="margin-bottom:14px">
-      <select id="catDropdown" class="dark-input" style="width:100%;margin-bottom:0" onchange="handleCatSelect(this)">
-        <option value="">— Select a category —</option>
-      </select>
-    </div>
-    <!-- Custom category input — hidden unless "New Category..." is selected -->
-    <div id="newCatRow" style="display:none;margin-bottom:14px">
-      <input type="text" id="newCatInput" class="dark-input" placeholder="Enter new category name..." style="width:100%" />
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <button class="cat-btn" data-cat="Movie"      onclick="selectCat(this)">Movie</button>
+      <button class="cat-btn" data-cat="TV Show"    onclick="selectCat(this)">TV Show</button>
+      <button class="cat-btn" data-cat="Restaurant" onclick="selectCat(this)">Restaurant</button>
+      <button class="cat-btn" data-cat="Recipe"     onclick="selectCat(this)">Recipe</button>
+      <button class="cat-btn" data-cat="Music"      onclick="selectCat(this)">Music / Album</button>
+      <button class="cat-btn" data-cat="Book"       onclick="selectCat(this)">Book</button>
+      <button class="cat-btn" data-cat="Joke"       onclick="selectCat(this)">Joke</button>
+      <button class="cat-btn" data-cat="Work"       onclick="selectCat(this)">Work</button>
+      <button class="cat-btn" data-cat="Other"      onclick="selectCat(this)">Other</button>
     </div>
     <input type="text" id="itemTitle" class="dark-input" placeholder="Title, punchline, or first line..." style="width:100%;margin-bottom:10px" />
     <input type="text" id="itemRec"   class="dark-input" placeholder="Recommended by... (optional)" style="width:100%;margin-bottom:10px" />
@@ -550,52 +437,23 @@ const REDIRECT_URI="https://mikecodingnotgood.github.io/mikes-food-journal/food-
 const WORKER_URL="https://dropbox-auth-worker.mikesvault.workers.dev";
 const WATER_GOAL=6;
 const TRT_DAYS=[4,0];
-
-// Token storage — now stores refresh token; access token cached in memory only
 function getRefreshToken(){return localStorage.getItem("fj_dbx_refresh")||"";}
 function setRefreshToken(t){localStorage.setItem("fj_dbx_refresh",t);}
 function getToken(){return localStorage.getItem("fj_dbx_token")||"";}
 function setToken(t){localStorage.setItem("fj_dbx_token",t);}
 function clearTokens(){localStorage.removeItem("fj_dbx_token");localStorage.removeItem("fj_dbx_refresh");}
-
-// Get a valid access token — refresh silently if needed
 let _refreshPromise=null;
-async function getValidToken(){
-  const access=getToken();
-  // Try current access token first — if we have one just use it,
-  // Dropbox access tokens last 4 hours; we'll refresh on 401
-  if(access)return access;
-  return await refreshAccessToken();
-}
+async function getValidToken(){const access=getToken();if(access)return access;return await refreshAccessToken();}
 async function refreshAccessToken(){
-  // Prevent concurrent refresh calls
   if(_refreshPromise)return _refreshPromise;
-  const rt=getRefreshToken();
-  if(!rt)return null;
+  const rt=getRefreshToken();if(!rt)return null;
   _refreshPromise=(async()=>{
     try{
-      const res=await fetch(WORKER_URL+"/token",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({action:"refresh",refresh_token:rt})
-      });
+      const res=await fetch(WORKER_URL+"/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"refresh",refresh_token:rt})});
       const d=await res.json();
-      if(d.access_token){
-        setToken(d.access_token);
-        // Schedule clearing the cached access token just before it expires (4hr - 5min)
-        setTimeout(()=>localStorage.removeItem("fj_dbx_token"),(4*60*60-300)*1000);
-        return d.access_token;
-      }
-      // Refresh token itself expired — force re-auth
-      clearTokens();
-      showToast("Dropbox session ended — reconnecting...","error");
-      setTimeout(()=>startDropboxOAuth(),1500);
-      return null;
-    }catch(e){
-      return null;
-    }finally{
-      _refreshPromise=null;
-    }
+      if(d.access_token){setToken(d.access_token);setTimeout(()=>localStorage.removeItem("fj_dbx_token"),(4*60*60-300)*1000);return d.access_token;}
+      clearTokens();showToast("Dropbox session ended — reconnecting...","error");setTimeout(()=>startDropboxOAuth(),1500);return null;
+    }catch(e){return null;}finally{_refreshPromise=null;}
   })();
   return _refreshPromise;
 }
@@ -610,7 +468,7 @@ const MEALS=[
 const MOTIVATIONS=["Small wins compound. Every honest log is a step forward.","You showed up today. That's the whole game.","Awareness is the first move. You made it.","Progress isn't always visible — but it's happening.","One day at a time. You tracked. That matters.","You can't change what you don't see. Now you see it.","Consistency beats perfection every single time.","Tomorrow is a fresh start. You've got the data.","Every meal logged is a data point. You're learning yourself.","Done is better than perfect. You logged. That's the win."];
 let viewDate=getTodayStr(),data=loadData(),panelMealId=null,panelFullness=null;
 function getTodayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[]};}}
+function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[]};if(!d.watchlist)d.watchlist=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[]};}}
 function saveData(){localStorage.setItem("fj_data",JSON.stringify(data));checkWeightNag();}
 function getDayData(d){
   if(!data.days[d])data.days[d]={meals:{},reflection:"",closed:false,mood:"",water:0,trt:{}};
@@ -622,54 +480,30 @@ function getDayData(d){
 function startDropboxOAuth(){
   const state=Math.random().toString(36).slice(2);
   localStorage.setItem("fj_dbx_state",state);
-  const p=new URLSearchParams({
-    client_id:DBX_APP_KEY,
-    redirect_uri:REDIRECT_URI,
-    response_type:"code",
-    state,
-    token_access_type:"offline",  // <-- this is what gets us a refresh token
-    scope:"files.content.write files.content.read"
-  });
+  const p=new URLSearchParams({client_id:DBX_APP_KEY,redirect_uri:REDIRECT_URI,response_type:"code",state,token_access_type:"offline",scope:"files.content.write files.content.read"});
   window.location.href="https://www.dropbox.com/oauth2/authorize?"+p.toString();
 }
 async function handleOAuthCallback(){
   const params=new URLSearchParams(window.location.search);
-  const code=params.get("code");
-  const state=params.get("state");
-  // Always clean the URL if there are OAuth params, even if we don't use them
+  const code=params.get("code");const state=params.get("state");
   if(code||state){history.replaceState(null,"",REDIRECT_URI);}
   if(!code||!state||state!==localStorage.getItem("fj_dbx_state"))return false;
   localStorage.removeItem("fj_dbx_state");
   showSyncBar(true,"Connecting to Dropbox...");
   try{
-    const res=await fetch(WORKER_URL+"/token",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({action:"exchange",code,redirect_uri:REDIRECT_URI})
-    });
+    const res=await fetch(WORKER_URL+"/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"exchange",code,redirect_uri:REDIRECT_URI})});
     const d=await res.json();
-    if(d.access_token&&d.refresh_token){
-      setToken(d.access_token);
-      setRefreshToken(d.refresh_token);
-      setTimeout(()=>localStorage.removeItem("fj_dbx_token"),(4*60*60-300)*1000);
-      return true;
-    }
-    showSyncBar(false,"Dropbox auth failed: "+(d.error||"unknown"));
-    return false;
-  }catch(e){
-    showSyncBar(false,"Worker error: "+e.message);
-    return false;
-  }
+    if(d.access_token&&d.refresh_token){setToken(d.access_token);setRefreshToken(d.refresh_token);setTimeout(()=>localStorage.removeItem("fj_dbx_token"),(4*60*60-300)*1000);return true;}
+    showSyncBar(false,"Dropbox auth failed: "+(d.error||"unknown"));return false;
+  }catch(e){showSyncBar(false,"Worker error: "+e.message);return false;}
 }
 window.addEventListener("DOMContentLoaded",async()=>{
   const fromOAuth=await handleOAuthCallback();
-  // Always show the app if we have a token — don't let a failed OAuth block the app
   if(getRefreshToken()||getToken()){
     showApp();
     if(fromOAuth){showToast("Dropbox connected! Syncing...","success");setTimeout(()=>syncToDropbox(),800);}
     else{pullFromDropbox();}
   }
-  // If no token at all, the setup screen stays visible (normal first-time flow)
 });
 function skipSetup(){showApp();}
 function showApp(){
@@ -685,20 +519,8 @@ async function pullFromDropbox(){
   try{
     let token=await getValidToken();
     if(!token){showSyncBar(false,"Could not get Dropbox token");return;}
-    let res=await fetch("https://content.dropboxapi.com/2/files/download",{
-      method:"POST",
-      headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE})}
-    });
-    // Auto-refresh on 401 and retry once
-    if(res.status===401){
-      localStorage.removeItem("fj_dbx_token");
-      token=await refreshAccessToken();
-      if(!token){return;}
-      res=await fetch("https://content.dropboxapi.com/2/files/download",{
-        method:"POST",
-        headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE})}
-      });
-    }
+    let res=await fetch("https://content.dropboxapi.com/2/files/download",{method:"POST",headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE})}});
+    if(res.status===401){localStorage.removeItem("fj_dbx_token");token=await refreshAccessToken();if(!token)return;res=await fetch("https://content.dropboxapi.com/2/files/download",{method:"POST",headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE})}});}
     if(res.status===409){showSyncBar(true,"No Dropbox data yet \u2014 starting fresh");return;}
     if(!res.ok){showSyncBar(false,"Could not load from Dropbox ("+res.status+")");return;}
     const remote=await res.json();
@@ -736,18 +558,6 @@ async function pullFromDropbox(){
     [...(remote.watchlist||[]),...(local.watchlist||[])].forEach(i=>{
       if(!wlSeen.has(i.id)){wlSeen.add(i.id);merged.watchlist.push(i);}
     });
-    // Merge sleep
-    const slSeen=new Set();
-    [...(remote.sleep||[]),...(local.sleep||[])].forEach(s=>{
-      if(!slSeen.has(s.id)){slSeen.add(s.id);merged.sleep.push(s);}
-    });
-    merged.sleep.sort((a,b)=>b.date.localeCompare(a.date));
-    // Merge exercise
-    const exSeen=new Set();
-    [...(remote.exercise||[]),...(local.exercise||[])].forEach(e=>{
-      if(!exSeen.has(e.id)){exSeen.add(e.id);merged.exercise.push(e);}
-    });
-    merged.exercise.sort((a,b)=>b.date.localeCompare(a.date));
     data=merged;
     localStorage.setItem("fj_data",JSON.stringify(data));
     renderToday();updateStreak();checkWeightNag();
@@ -762,23 +572,9 @@ async function pullFromDropbox(){
 async function pushToDropbox(){
   if(!getRefreshToken()&&!getToken())return false;
   try{
-    let token=await getValidToken();
-    if(!token)return false;
-    let res=await fetch("https://content.dropboxapi.com/2/files/upload",{
-      method:"POST",
-      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/octet-stream","Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE,mode:"overwrite",autorename:false,mute:true})},
-      body:JSON.stringify(data,null,2)
-    });
-    if(res.status===401){
-      localStorage.removeItem("fj_dbx_token");
-      token=await refreshAccessToken();
-      if(!token)return false;
-      res=await fetch("https://content.dropboxapi.com/2/files/upload",{
-        method:"POST",
-        headers:{"Authorization":"Bearer "+token,"Content-Type":"application/octet-stream","Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE,mode:"overwrite",autorename:false,mute:true})},
-        body:JSON.stringify(data,null,2)
-      });
-    }
+    let token=await getValidToken();if(!token)return false;
+    let res=await fetch("https://content.dropboxapi.com/2/files/upload",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/octet-stream","Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE,mode:"overwrite",autorename:false,mute:true})},body:JSON.stringify(data,null,2)});
+    if(res.status===401){localStorage.removeItem("fj_dbx_token");token=await refreshAccessToken();if(!token)return false;res=await fetch("https://content.dropboxapi.com/2/files/upload",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/octet-stream","Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE,mode:"overwrite",autorename:false,mute:true})},body:JSON.stringify(data,null,2)});}
     return res.ok;
   }catch{return false;}
 }
@@ -797,15 +593,13 @@ function saveGoalWeight(){
   showToast("Goal weight saved!","success");renderWeightProgress();
 }
 function showTab(tab){
-  ["today","history","weight","watchlist","settings","health"].forEach(t=>{
+  ["today","history","weight","watchlist","settings"].forEach(t=>{
     document.getElementById("page-"+t).classList.toggle("hidden",t!==tab);
     document.getElementById("tab-"+t).classList.toggle("active",t===tab);
   });
   if(tab==="history")renderHistory();
   if(tab==="weight")renderWeightPage();
   if(tab==="watchlist")renderWatchlist();
-  if(tab==="health")renderHealthPage();
-  if(tab==="settings"){renderCustomCats();renderQaSettingsList();}
 }
 function changeDay(d){const dt=new Date(viewDate+"T12:00:00");dt.setDate(dt.getDate()+d);viewDate=dt.toISOString().slice(0,10);renderToday();}
 function goToday(){viewDate=getTodayStr();renderToday();}
@@ -935,9 +729,9 @@ function selFull(val){
 function saveEntry(){
   const text=(document.getElementById("panelTextarea").value||"").trim();
   if(!text){showToast("Type what you ate first.","error");return;}
-  if(!panelFullness){}// fullness is optional
+  if(!panelFullness){showToast("Did you feel full, or want more?","error");return;}
   const day=getDayData(viewDate),time=new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
-  day.meals[panelMealId].push({food:text,fullness:panelFullness||null,time});
+  day.meals[panelMealId].push({food:text,fullness:panelFullness,time});
   saveData();showToast("Logged! \uD83D\uDC4D","success");openPanel(panelMealId);syncToDropbox();
 }
 function deleteEntry(mealId,idx){getDayData(viewDate).meals[mealId].splice(idx,1);saveData();openPanel(mealId);}
@@ -1205,9 +999,7 @@ function renderHistory(){
   }).join("");
 }
 async function syncToDropbox(){
-  const token=getToken();
-  if(!token){showSyncBar(false,"No token \u2014 saved locally only");return;}
-  // Full two-way sync: pull first, merge, then push
+  if(!getRefreshToken()&&!getToken()){showSyncBar(false,"No token \u2014 saved locally only");return;}
   await pullFromDropbox();
 }
 function showSyncBar(ok,msg){
@@ -1236,360 +1028,21 @@ function showToast(msg,type){
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),3500);
 }
 
-// HEALTH TAB
-let selSleepQ=null,selActT=null,healthChartView='sleep',healthChartRangeDays=30,healthChart=null;
-
-function selSleepQuality(q){
-  selSleepQ=q;
-  document.querySelectorAll('.sq-btn').forEach(b=>{
-    b.className='sq-btn';
-    if(b.dataset.q===q)b.classList.add('sel-'+q);
-  });
-}
-function selActType(btn){
-  selActT=btn.dataset.t;
-  document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
-  btn.classList.add('sel');
-}
-function saveSleep(){
-  const bedtime=document.getElementById('sleepBedtime').value;
-  const wake=document.getElementById('sleepWake').value;
-  if(!bedtime||!wake){showToast('Enter both bedtime and wake time.','error');return;}
-  if(!selSleepQ){showToast('Pick a sleep quality first.','error');return;}
-  const [bh,bm]=bedtime.split(':').map(Number);
-  const [wh,wm]=wake.split(':').map(Number);
-  let mins=(wh*60+wm)-(bh*60+bm);
-  if(mins<0)mins+=1440;
-  const hrs=+(mins/60).toFixed(1);
-  if(!data.sleep)data.sleep=[];
-  data.sleep.unshift({id:Date.now(),date:getTodayStr(),bedtime,wake,quality:selSleepQ,hours:hrs});
-  saveData();
-  document.getElementById('sleepBedtime').value='';
-  document.getElementById('sleepWake').value='';
-  selSleepQ=null;
-  document.querySelectorAll('.sq-btn').forEach(b=>b.className='sq-btn');
-  renderHealthPage();syncToDropbox();
-  showToast('Sleep logged! \uD83D\uDCA4','success');
-}
-function deleteSleep(id){
-  data.sleep=data.sleep.filter(s=>s.id!==id);
-  saveData();renderHealthPage();syncToDropbox();
-}
-function saveExercise(){
-  const dur=parseInt(document.getElementById('exDuration').value);
-  if(!selActT){showToast('Pick an activity type first.','error');return;}
-  if(!dur||dur<1||dur>600){showToast('Enter a valid duration (minutes).','error');return;}
-  if(!data.exercise)data.exercise=[];
-  data.exercise.unshift({id:Date.now(),date:getTodayStr(),type:selActT,duration:dur,time:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})});
-  saveData();
-  document.getElementById('exDuration').value='';
-  selActT=null;
-  document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
-  renderHealthPage();syncToDropbox();
-  showToast('Workout logged! \uD83D\uDCAA','success');
-}
-function deleteExercise(id){
-  data.exercise=data.exercise.filter(e=>e.id!==id);
-  saveData();renderHealthPage();syncToDropbox();
-}
-function setHealthChartView(view,btn){
-  healthChartView=view;
-  document.getElementById('hChartToggleSleep').classList.toggle('active',view==='sleep');
-  document.getElementById('hChartToggleEx').classList.toggle('active',view==='exercise');
-  renderHealthChart();
-}
-function setHealthChartRange(days,btn){
-  healthChartRangeDays=days;
-  document.querySelectorAll('#hChartRangeBtns .chart-range-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderHealthChart();
-}
-function renderHealthPage(){
-  if(!data.sleep)data.sleep=[];
-  if(!data.exercise)data.exercise=[];
-  const today=getTodayStr();
-  const qLabel={great:'Great',okay:'Okay',rough:'Rough'};
-
-  // --- Stats ---
-  // Avg hours slept last 7 days
-  const last7sl=data.sleep.filter(s=>{const d=new Date(s.date+'T12:00:00'),now=new Date();return(now-d)/86400000<=7;});
-  const avgHrs=last7sl.length?(last7sl.reduce((a,s)=>a+(s.hours||0),0)/last7sl.length).toFixed(1):'—';
-  document.getElementById('hStatSleep').textContent=avgHrs==='—'?'—':avgHrs+'h';
-
-  // Workouts this week (Mon–Sun)
-  const now=new Date();
-  const dayOfWeek=now.getDay();
-  const startOfWeek=new Date(now);startOfWeek.setDate(now.getDate()-((dayOfWeek+6)%7));startOfWeek.setHours(0,0,0,0);
-  const thisWeekEx=data.exercise.filter(e=>new Date(e.date+'T12:00:00')>=startOfWeek).length;
-  document.getElementById('hStatWorkouts').textContent=thisWeekEx;
-
-  // Exercise streak
-  let streak=0;
-  for(let i=0;i<365;i++){
-    const d=new Date();d.setDate(d.getDate()-i);
-    const ds=d.toISOString().slice(0,10);
-    if(data.exercise.some(e=>e.date===ds))streak++;
-    else if(i>0)break;
-  }
-  document.getElementById('hStatStreak').textContent=streak>0?streak+'d':'—';
-
-  // --- Sleep log list (today) ---
-  const todaySleep=data.sleep.filter(s=>s.date===today);
-  const slList=document.getElementById('sleepLogList');
-  slList.innerHTML=todaySleep.length?todaySleep.map(s=>`
-    <div class="health-log-item">
-      <div>
-        <span style="font-weight:700;color:${s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'}">${qLabel[s.quality]}</span>
-        <span style="color:var(--text2);font-size:12px;margin-left:6px">${s.bedtime} → ${s.wake} · ${s.hours}h</span>
-      </div>
-      <button class="health-log-del" onclick="deleteSleep(${s.id})">&#x2715;</button>
-    </div>`).join('')
-    :'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged yet tonight</div>';
-
-  // --- Exercise log list (today) ---
-  const todayEx=data.exercise.filter(e=>e.date===today);
-  const exList=document.getElementById('exerciseLogList');
-  exList.innerHTML=todayEx.length?todayEx.map(e=>`
-    <div class="health-log-item">
-      <div>
-        <span style="font-weight:700;color:#f97316">${e.type}</span>
-        <span style="color:var(--text2);font-size:12px;margin-left:6px">${e.duration} min · ${e.time}</span>
-      </div>
-      <button class="health-log-del" onclick="deleteExercise(${e.id})">&#x2715;</button>
-    </div>`).join('')
-    :'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged today</div>';
-
-  renderHealthChart();
-}
-
-function renderHealthChart(){
-  if(!data.sleep)data.sleep=[];
-  if(!data.exercise)data.exercise=[];
-  const canvas=document.getElementById('healthChart');
-  const emptyEl=document.getElementById('healthChartEmpty');
-  if(!canvas)return;
-  if(healthChart){healthChart.destroy();healthChart=null;}
-
-  const cutoff=healthChartRangeDays>0?new Date(Date.now()-healthChartRangeDays*86400000):null;
-
-  if(healthChartView==='sleep'){
-    // One bar per sleep entry, colored by quality
-    let entries=[...data.sleep].sort((a,b)=>a.date.localeCompare(b.date));
-    if(cutoff)entries=entries.filter(s=>new Date(s.date+'T12:00:00')>=cutoff);
-    if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
-    canvas.style.display='block';emptyEl.style.display='none';
-    const labels=entries.map(s=>{
-      const d=new Date(s.date+'T12:00:00');
-      return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    });
-    const hours=entries.map(s=>s.hours);
-    const colors=entries.map(s=>s.quality==='great'?'rgba(16,185,129,0.8)':s.quality==='okay'?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.8)');
-    const borderColors=entries.map(s=>s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444');
-    healthChart=new Chart(canvas,{
-      type:'bar',
-      data:{
-        labels,
-        datasets:[{
-          label:'Hours Slept',
-          data:hours,
-          backgroundColor:colors,
-          borderColor:borderColors,
-          borderWidth:1.5,
-          borderRadius:4
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:true,
-        plugins:{
-          legend:{display:false},
-          tooltip:{
-            backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',
-            borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
-            callbacks:{
-              label:ctx=>{
-                const e=entries[ctx.dataIndex];
-                const q=e.quality.charAt(0).toUpperCase()+e.quality.slice(1);
-                return `${ctx.parsed.y}h · ${q} · ${e.bedtime}–${e.wake}`;
-              }
-            }
-          }
-        },
-        scales:{
-          x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},
-          y:{beginAtZero:true,max:12,ticks:{color:'#94a3b8',font:{size:10},callback:v=>v+'h'},grid:{color:'rgba(255,255,255,0.04)'}}
-        }
-      }
-    });
-  } else {
-    // Workout frequency — bar chart by day or week
-    let entries=[...data.exercise].sort((a,b)=>a.date.localeCompare(b.date));
-    if(cutoff)entries=entries.filter(e=>new Date(e.date+'T12:00:00')>=cutoff);
-    if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
-    canvas.style.display='block';emptyEl.style.display='none';
-    const groupByDay=healthChartRangeDays<=30||(healthChartRangeDays===0&&entries.length<=30);
-    const buckets={};
-    entries.forEach(e=>{
-      let key;
-      if(groupByDay){key=e.date;}
-      else{
-        const d=new Date(e.date+'T12:00:00');
-        const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));
-        key=mon.toISOString().slice(0,10);
-      }
-      buckets[key]=(buckets[key]||0)+1;
-    });
-    const sortedKeys=Object.keys(buckets).sort();
-    const labels=sortedKeys.map(k=>{
-      const d=new Date(k+'T12:00:00');
-      return groupByDay?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):
-        'Wk '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    });
-    healthChart=new Chart(canvas,{
-      type:'bar',
-      data:{
-        labels,
-        datasets:[{
-          label:'Workouts',
-          data:sortedKeys.map(k=>buckets[k]),
-          backgroundColor:'rgba(249,115,22,0.7)',
-          borderColor:'#f97316',
-          borderWidth:1.5,
-          borderRadius:4
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:true,
-        plugins:{
-          legend:{display:false},
-          tooltip:{
-            backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',
-            borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
-            callbacks:{label:ctx=>ctx.parsed.y+' workout'+(ctx.parsed.y!==1?'s':'')}
-          }
-        },
-        scales:{
-          x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:10},grid:{color:'rgba(255,255,255,0.04)'}},
-          y:{beginAtZero:true,ticks:{color:'#94a3b8',font:{size:10},stepSize:1,precision:0},grid:{color:'rgba(255,255,255,0.04)'}}
-        }
-      }
-    });
-  }
-}
-
-// QUICK ADD
-const QA_DEFAULTS=['Eggs and breakfast','Turkey sandwich','Protein shake','Deli meat and cheese','Sandwich','Protein bar'];
-function getQuickAdds(){
-  const stored=localStorage.getItem('fj_quick_adds');
-  if(stored!==null)return JSON.parse(stored);
-  localStorage.setItem('fj_quick_adds',JSON.stringify([...QA_DEFAULTS]));
-  return [...QA_DEFAULTS];
-}
-function saveQuickAdds(arr){localStorage.setItem('fj_quick_adds',JSON.stringify(arr));}
-
-function renderQuickAddChips(){
-  const chips=document.getElementById('qaChips');
-  if(!chips)return;
-  const items=getQuickAdds();
-  if(!items.length){chips.innerHTML='<span style="font-size:12px;color:var(--text3);font-style:italic">No quick add items — add some in Settings.</span>';return;}
-  chips.innerHTML=items.map(item=>
-    `<button class="qa-chip" onclick="quickAdd('${item.replace(/'/g,"\\'")}'">${esc(item)}</button>`
-  ).join('');
-}
-
-function renderQaSettingsList(){
-  const list=document.getElementById('qaSettingsList');
-  if(!list)return;
-  const items=getQuickAdds();
-  if(!items.length){list.innerHTML='<div style="font-size:13px;color:var(--text2);font-style:italic">No quick add items yet.</div>';return;}
-  list.innerHTML='<div class="settings-tag-wrap">'
-    +items.map((item,i)=>
-      `<span class="settings-tag">${esc(item)}<button class="settings-tag-x" onclick="removeQuickAddItem(${i})" title="Remove">&#x2715;</button></span>`
-    ).join('')
-    +'</div>';
-}
-
-function addQuickAddItem(){
-  const input=document.getElementById('qaNewItem');
-  const val=input.value.trim();
-  if(!val){showToast('Enter a food name first.','error');return;}
-  const items=getQuickAdds();
-  if(items.includes(val)){showToast('That item is already in your quick add list.','error');return;}
-  items.push(val);
-  saveQuickAdds(items);
-  input.value='';
-  renderQaSettingsList();
-  renderQuickAddChips();
-  showToast('"'+val+'" added to Quick Add!','success');
-}
-
-function removeQuickAddItem(idx){
-  const items=getQuickAdds();
-  items.splice(idx,1);
-  saveQuickAdds(items);
-  renderQaSettingsList();
-  renderQuickAddChips();
-  showToast('Item removed.','success');
-}
-
-
-const CAT_BUILTIN=['Movie','TV Show','Restaurant','Recipe','Music / Album','Book','Joke','Work','Other'];
+// WATCHLIST
+const CAT_ORDER=['Movie','TV Show','Restaurant','Recipe','Music','Book','Joke','Work','Other'];
 let selectedCat=null;
-
-function getAllCats(){
-  const stored=localStorage.getItem('fj_all_cats');
-  if(stored!==null)return JSON.parse(stored);
-  // First load — seed from builtins
-  localStorage.setItem('fj_all_cats',JSON.stringify([...CAT_BUILTIN]));
-  return [...CAT_BUILTIN];
-}
-function saveAllCats(arr){localStorage.setItem('fj_all_cats',JSON.stringify(arr));}
-
-function populateCatDropdown(){
-  const dd=document.getElementById('catDropdown');
-  const cats=getAllCats();
-  dd.innerHTML='<option value="">— Select a category —</option>'
-    +cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')
-    +'<option value="__new__">+ New Category...</option>';
-}
-
-function handleCatSelect(sel){
-  const newCatRow=document.getElementById('newCatRow');
-  if(sel.value==='__new__'){
-    newCatRow.style.display='block';
-    document.getElementById('newCatInput').value='';
-    setTimeout(()=>document.getElementById('newCatInput').focus(),50);
-    selectedCat=null;
-  } else {
-    newCatRow.style.display='none';
-    selectedCat=sel.value||null;
-  }
-}
-
 function openAddItem(){
   selectedCat=null;
-  ['itemTitle','itemRec','itemNote','newCatInput'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('newCatRow').style.display='none';
-  populateCatDropdown();
+  ['itemTitle','itemRec','itemNote'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));
   document.getElementById('addItemModal').classList.remove('hidden');
   setTimeout(()=>document.getElementById('itemTitle').focus(),100);
 }
 function closeAddItem(){document.getElementById('addItemModal').classList.add('hidden');}
-
+function selectCat(btn){document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');selectedCat=btn.dataset.cat;}
 function saveItem(){
   const title=document.getElementById('itemTitle').value.trim();
   if(!title){showToast('Add a title first.','error');return;}
-  const dd=document.getElementById('catDropdown');
-  if(dd.value==='__new__'){
-    const newCat=document.getElementById('newCatInput').value.trim();
-    if(!newCat){showToast('Enter a name for the new category.','error');return;}
-    const cats=getAllCats();
-    if(!cats.includes(newCat)){cats.push(newCat);saveAllCats(cats);}
-    selectedCat=newCat;
-  } else {
-    selectedCat=dd.value||null;
-  }
   if(!selectedCat){showToast('Pick a category first.','error');return;}
   const rec=document.getElementById('itemRec').value.trim();
   const note=document.getElementById('itemNote').value.trim();
@@ -1598,7 +1051,6 @@ function saveItem(){
   saveData();closeAddItem();renderWatchlist();syncToDropbox();
   showToast(title+' saved to My List!','success');
 }
-
 function toggleItem(id){
   const item=data.watchlist.find(i=>i.id===id);
   if(item){item.done=!item.done;saveData();renderWatchlist();syncToDropbox();}
@@ -1607,70 +1059,35 @@ function deleteItem(id){
   data.watchlist=data.watchlist.filter(i=>i.id!==id);
   saveData();renderWatchlist();syncToDropbox();
 }
-function deleteCat(cat){
-  if(!confirm('Remove "'+cat+'" from the list? Any items already saved under it are kept.'))return;
-  saveAllCats(getAllCats().filter(c=>c!==cat));
-  renderCustomCats();
-  showToast('"'+cat+'" removed.','success');
-}
-
 function renderWatchlist(){
   if(!data.watchlist)data.watchlist=[];
   const c=document.getElementById('watchlistContent');
-  const allCats=getAllCats();
+  if(!data.watchlist.length){c.innerHTML='<div class="wl-empty">Nothing saved yet.<br>Hit + Add to start your list.</div>';return;}
   const grouped={};
-  allCats.forEach(cat=>{grouped[cat]=[];});
-  data.watchlist.forEach(item=>{
-    if(!grouped[item.cat])grouped[item.cat]=[];
-    grouped[item.cat].push(item);
+  CAT_ORDER.forEach(cat=>{grouped[cat]=[];});
+  data.watchlist.forEach(item=>{if(!grouped[item.cat])grouped[item.cat]=[];grouped[item.cat].push(item);});
+  let html='';
+  CAT_ORDER.forEach(cat=>{
+    const items=grouped[cat];
+    if(!items.length)return;
+    const todo=items.filter(i=>!i.done).length;
+    html+='<div class="wl-group"><div class="wl-group-header">'+cat+' <span style="font-weight:400;opacity:0.6">('+todo+' remaining)</span></div>';
+    html+=items.map(item=>
+      '<div class="wl-item'+(item.done?' done':'')+'">'
+      +'<div class="wl-check" onclick="toggleItem('+item.id+')" title="'+(item.done?'Unmark':'Mark done')+'">&#10003;</div>'
+      +'<div style="flex:1;min-width:0">'
+      +'<div class="wl-title">'+esc(item.title)+'</div>'
+      +'<div class="wl-meta">'
+      +(item.rec?'<span class="wl-rec">From: '+esc(item.rec)+'</span>':'')
+      +(item.note?'<span class="wl-note">'+esc(item.note)+'</span>':'')
+      +'<span class="wl-date">Added '+formatLabel(item.added)+'</span>'
+      +'</div></div>'
+      +'<button class="wl-del" onclick="deleteItem('+item.id+')" title="Remove">&#215;</button>'
+      +'</div>'
+    ).join('');
+    html+='</div>';
   });
-  // Include orphaned cats (items whose category was deleted)
-  const activeCats=[...allCats];
-  data.watchlist.forEach(item=>{if(!activeCats.includes(item.cat))activeCats.push(item.cat);});
-  if(!data.watchlist.length){
-    c.innerHTML='<div class="wl-empty">Nothing saved yet.<br>Hit + Add to start your list.</div>';
-  } else {
-    let html='';
-    activeCats.forEach(cat=>{
-      const items=grouped[cat]||[];
-      if(!items.length)return;
-      const todo=items.filter(i=>!i.done).length;
-      html+='<div class="wl-group"><div class="wl-group-header">'+esc(cat)+' <span style="font-weight:400;opacity:0.6">('+todo+' remaining)</span></div>';
-      html+=items.map(item=>
-        '<div class="wl-item'+(item.done?' done':'')+'">'
-        +'<div class="wl-check" onclick="toggleItem('+item.id+')" title="'+(item.done?'Unmark':'Mark done')+'">&#10003;</div>'
-        +'<div style="flex:1;min-width:0">'
-        +'<div class="wl-title">'+esc(item.title)+'</div>'
-        +'<div class="wl-meta">'
-        +(item.rec?'<span class="wl-rec">From: '+esc(item.rec)+'</span>':'')
-        +(item.note?'<span class="wl-note">'+esc(item.note)+'</span>':'')
-        +'<span class="wl-date">Added '+formatLabel(item.added)+'</span>'
-        +'</div></div>'
-        +'<button class="wl-del" onclick="deleteItem('+item.id+')" title="Remove">&#215;</button>'
-        +'</div>'
-      ).join('');
-      html+='</div>';
-    });
-    c.innerHTML=html;
-  }
-  renderCustomCats();
-}
-
-function renderCustomCats(){
-  const cats=getAllCats();
-  const mgmtList=document.getElementById('manageCatsList');
-  if(!mgmtList)return;
-  if(cats.length){
-    mgmtList.innerHTML='<div class="settings-tag-wrap">'
-      +cats.map(cat=>
-        '<span class="settings-tag">'+esc(cat)
-        +'<button class="settings-tag-x" onclick="deleteCat(\''+cat.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">&#x2715;</button>'
-        +'</span>'
-      ).join('')
-      +'</div>';
-  } else {
-    mgmtList.innerHTML='<div style="font-size:13px;color:var(--text2);font-style:italic">All categories removed. Add new ones via &ldquo;+ New Category&rdquo; in the Random tab.</div>';
-  }
+  c.innerHTML=html;
 }
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 </script>
