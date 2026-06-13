@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Food Journal</title>
+<title>Mike's Vault</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -174,8 +174,8 @@
 <div id="setupScreen" class="setup-screen">
   <div class="setup-card">
     <div class="logo">&#x1F957;</div>
-    <h2>Food Journal</h2>
-    <p>Your personal food log. Connect Dropbox to keep everything backed up privately.</p>
+    <h2>Mike's Vault</h2>
+    <p>Your personal vault. Food, health, movies, and more — all in one place.</p>
     <button class="btn btn-blue" style="width:100%;justify-content:center;padding:13px;font-size:15px;margin-bottom:4px;" onclick="startDropboxOAuth()">Connect Dropbox</button>
     <button class="setup-skip" onclick="skipSetup()">Skip &#8212; save locally only</button>
   </div>
@@ -185,7 +185,7 @@
   <header class="app-header">
     <div class="brand">
       <span style="font-size:22px">&#x1F957;</span>
-      <div><h1>Food Journal</h1><div class="sub">Know what you ate. Learn from it.</div></div>
+      <div><h1>Mike's Vault</h1><div class="sub">Your life. Logged.</div></div>
     </div>
     <div class="header-right">
       <div class="streak-badge" id="streakBadge">&#x1F525; <span id="streakCount">0</span> day streak</div>
@@ -196,10 +196,10 @@
   <div id="syncBar" class="sync-bar hidden"><div class="sync-dot"></div><span id="syncMsg"></span></div>
 
   <div class="nav-tabs">
-    <div class="nav-tab active" id="tab-today"    onclick="showTab('today')">Today</div>
-    <div class="nav-tab"        id="tab-history"  onclick="showTab('history')">History</div>
+    <div class="nav-tab active" id="tab-today"    onclick="showTab('today')">Food</div>
+    <div class="nav-tab"        id="tab-watchlist" onclick="showTab('watchlist')">Random</div>
     <div class="nav-tab"        id="tab-weight"   onclick="showTab('weight')">Weight</div>
-    <div class="nav-tab"        id="tab-watchlist" onclick="showTab('watchlist')">My List</div>
+    <div class="nav-tab"        id="tab-history"  onclick="showTab('history')">History</div>
     <div class="nav-tab"        id="tab-settings" onclick="showTab('settings')">Settings</div>
   </div>
 
@@ -427,7 +427,11 @@ function handleOAuthCallback(){
 }
 window.addEventListener("DOMContentLoaded",()=>{
   const fromOAuth=handleOAuthCallback();
-  if(getToken()){showApp();if(fromOAuth){showToast("Dropbox connected! Syncing...","success");setTimeout(()=>syncToDropbox(),800);}}
+  if(getToken()){
+    showApp();
+    if(fromOAuth){showToast("Dropbox connected! Syncing...","success");setTimeout(()=>syncToDropbox(),800);}
+    else{pullFromDropbox();}
+  }
 });
 function skipSetup(){showApp();}
 function showApp(){
@@ -436,6 +440,45 @@ function showApp(){
   document.getElementById("dropboxStatus").textContent=getToken()?"Token saved \u2713":"No token \u2014 local only";
   if(data.goalWeight)document.getElementById("goalWeightInput").value=data.goalWeight;
   renderToday();updateStreak();checkWeightNag();
+}
+async function pullFromDropbox(){
+  const token=getToken();
+  if(!token)return;
+  try{
+    const res=await fetch("https://content.dropboxapi.com/2/files/download",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE})}
+    });
+    if(!res.ok)return;
+    const remote=await res.json();
+    const local=data;
+    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[]};
+    const allDays=new Set([...Object.keys(local.days||{}),...Object.keys(remote.days||{})]);
+    allDays.forEach(d=>{
+      const ld=local.days[d],rd=remote.days[d];
+      if(!ld)merged.days[d]=rd;
+      else if(!rd)merged.days[d]=ld;
+      else{
+        const lcount=Object.values(ld.meals||{}).reduce((a,b)=>a+b.length,0);
+        const rcount=Object.values(rd.meals||{}).reduce((a,b)=>a+b.length,0);
+        merged.days[d]=rcount>=lcount?rd:ld;
+      }
+    });
+    const wSeen=new Set();
+    [...(local.weight||[]),...(remote.weight||[])].forEach(w=>{
+      const key=w.date+"-"+w.weight;
+      if(!wSeen.has(key)){wSeen.add(key);merged.weight.push(w);}
+    });
+    merged.weight.sort((a,b)=>b.date.localeCompare(a.date));
+    const wlSeen=new Set();
+    [...(local.watchlist||[]),...(remote.watchlist||[])].forEach(i=>{
+      if(!wlSeen.has(i.id)){wlSeen.add(i.id);merged.watchlist.push(i);}
+    });
+    data=merged;
+    localStorage.setItem("fj_data",JSON.stringify(data));
+    renderToday();updateStreak();
+    showSyncBar(true,"Loaded latest from Dropbox \u00B7 "+new Date().toLocaleTimeString());
+  }catch(e){}
 }
 function updateToken(){
   const t=document.getElementById("settingsToken").value.trim();
