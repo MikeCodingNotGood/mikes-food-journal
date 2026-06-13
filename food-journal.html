@@ -455,8 +455,9 @@
       <div class="settings-row"><span id="dropboxStatus" style="font-size:13px;color:var(--text2)">&#8212;</span></div>
     </div>
     <div class="settings-section">
-      <h3>Custom Categories</h3>
-      <div id="manageCatsList"><div style="font-size:13px;color:var(--text2);font-style:italic">No custom categories yet. Create one by selecting "+ New Category..." when adding to My List.</div></div>
+      <h3>Manage Categories</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Remove any category you don't want. Items already saved under it are never deleted.</p>
+      <div id="manageCatsList"></div>
     </div>
     <div class="settings-section">
       <h3>Data</h3>
@@ -1473,29 +1474,33 @@ function renderHealthChart(){
 const CAT_BUILTIN=['Movie','TV Show','Restaurant','Recipe','Music / Album','Book','Joke','Work','Other'];
 let selectedCat=null;
 
-function getCustomCats(){return JSON.parse(localStorage.getItem('fj_custom_cats')||'[]');}
-function saveCustomCats(arr){localStorage.setItem('fj_custom_cats',JSON.stringify(arr));}
-function getAllCats(){return [...CAT_BUILTIN,...getCustomCats()];}
+function getAllCats(){
+  const stored=localStorage.getItem('fj_all_cats');
+  if(stored!==null)return JSON.parse(stored);
+  // First load — seed from builtins
+  localStorage.setItem('fj_all_cats',JSON.stringify([...CAT_BUILTIN]));
+  return [...CAT_BUILTIN];
+}
+function saveAllCats(arr){localStorage.setItem('fj_all_cats',JSON.stringify(arr));}
 
-function populateCatDropdown(currentVal){
+function populateCatDropdown(){
   const dd=document.getElementById('catDropdown');
   const cats=getAllCats();
   dd.innerHTML='<option value="">— Select a category —</option>'
-    +cats.map(c=>`<option value="${esc(c)}"${c===currentVal?'selected':''}>${esc(c)}</option>`).join('')
+    +cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')
     +'<option value="__new__">+ New Category...</option>';
 }
 
 function handleCatSelect(sel){
-  const val=sel.value;
   const newCatRow=document.getElementById('newCatRow');
-  if(val==='__new__'){
+  if(sel.value==='__new__'){
     newCatRow.style.display='block';
     document.getElementById('newCatInput').value='';
     setTimeout(()=>document.getElementById('newCatInput').focus(),50);
     selectedCat=null;
   } else {
     newCatRow.style.display='none';
-    selectedCat=val||null;
+    selectedCat=sel.value||null;
   }
 }
 
@@ -1503,7 +1508,7 @@ function openAddItem(){
   selectedCat=null;
   ['itemTitle','itemRec','itemNote','newCatInput'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('newCatRow').style.display='none';
-  populateCatDropdown(null);
+  populateCatDropdown();
   document.getElementById('addItemModal').classList.remove('hidden');
   setTimeout(()=>document.getElementById('itemTitle').focus(),100);
 }
@@ -1512,20 +1517,16 @@ function closeAddItem(){document.getElementById('addItemModal').classList.add('h
 function saveItem(){
   const title=document.getElementById('itemTitle').value.trim();
   if(!title){showToast('Add a title first.','error');return;}
-
-  // Handle new custom category
   const dd=document.getElementById('catDropdown');
   if(dd.value==='__new__'){
     const newCat=document.getElementById('newCatInput').value.trim();
     if(!newCat){showToast('Enter a name for the new category.','error');return;}
-    // Save custom cat if not already there
-    const customs=getCustomCats();
-    if(!customs.includes(newCat)){customs.push(newCat);saveCustomCats(customs);}
+    const cats=getAllCats();
+    if(!cats.includes(newCat)){cats.push(newCat);saveAllCats(cats);}
     selectedCat=newCat;
   } else {
     selectedCat=dd.value||null;
   }
-
   if(!selectedCat){showToast('Pick a category first.','error');return;}
   const rec=document.getElementById('itemRec').value.trim();
   const note=document.getElementById('itemNote').value.trim();
@@ -1543,19 +1544,16 @@ function deleteItem(id){
   data.watchlist=data.watchlist.filter(i=>i.id!==id);
   saveData();renderWatchlist();syncToDropbox();
 }
-function deleteCustomCat(cat){
-  if(!confirm('Delete the "'+cat+'" category? Items already saved under it will keep the category label but it will no longer appear in the dropdown.'))return;
-  const customs=getCustomCats().filter(c=>c!==cat);
-  saveCustomCats(customs);
+function deleteCat(cat){
+  if(!confirm('Remove "'+cat+'" from the list? Any items already saved under it are kept.'))return;
+  saveAllCats(getAllCats().filter(c=>c!==cat));
   renderCustomCats();
-  showToast('"'+cat+'" removed from categories.','success');
+  showToast('"'+cat+'" removed.','success');
 }
 
 function renderWatchlist(){
   if(!data.watchlist)data.watchlist=[];
   const c=document.getElementById('watchlistContent');
-
-  // Build ordered list — builtins first, then custom, then any orphaned cats
   const allCats=getAllCats();
   const grouped={};
   allCats.forEach(cat=>{grouped[cat]=[];});
@@ -1563,12 +1561,9 @@ function renderWatchlist(){
     if(!grouped[item.cat])grouped[item.cat]=[];
     grouped[item.cat].push(item);
   });
-
-  // Collect all cats that have items (including orphaned)
-  const activeCats=allCats.filter(cat=>grouped[cat]&&grouped[cat].length);
-  // Also add any cats in data not in allCats (orphaned from deleted custom cats)
-  data.watchlist.forEach(item=>{if(!allCats.includes(item.cat)&&!activeCats.includes(item.cat))activeCats.push(item.cat);});
-
+  // Include orphaned cats (items whose category was deleted)
+  const activeCats=[...allCats];
+  data.watchlist.forEach(item=>{if(!activeCats.includes(item.cat))activeCats.push(item.cat);});
   if(!data.watchlist.length){
     c.innerHTML='<div class="wl-empty">Nothing saved yet.<br>Hit + Add to start your list.</div>';
   } else {
@@ -1595,23 +1590,22 @@ function renderWatchlist(){
     });
     c.innerHTML=html;
   }
-
-  // Manage custom categories — always render in settings
   renderCustomCats();
 }
+
 function renderCustomCats(){
-  const customs=getCustomCats();
+  const cats=getAllCats();
   const mgmtList=document.getElementById('manageCatsList');
   if(!mgmtList)return;
-  if(customs.length){
-    mgmtList.innerHTML=customs.map(cat=>
-      `<div class="health-log-item">
-        <span style="font-size:13px">${esc(cat)}</span>
-        <button class="health-log-del" onclick="deleteCustomCat('${esc(cat)}')" title="Delete category">&#x2715;</button>
-      </div>`
+  if(cats.length){
+    mgmtList.innerHTML=cats.map(cat=>
+      '<div class="health-log-item">'
+      +'<span style="font-size:13px">'+esc(cat)+'</span>'
+      +'<button class="health-log-del" onclick="deleteCat(\''+cat.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" title="Remove">&#x2715;</button>'
+      +'</div>'
     ).join('');
   } else {
-    mgmtList.innerHTML='<div style="font-size:13px;color:var(--text2);font-style:italic">No custom categories yet. Create one by selecting &ldquo;+ New Category&hellip;&rdquo; when adding to My List.</div>';
+    mgmtList.innerHTML='<div style="font-size:13px;color:var(--text2);font-style:italic">All categories removed. Add new ones via &ldquo;+ New Category&rdquo; in the Random tab.</div>';
   }
 }
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
