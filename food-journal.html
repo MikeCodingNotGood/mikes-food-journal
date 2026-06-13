@@ -252,11 +252,22 @@
       <div class="hero-stat"><div class="hv hv-amber" id="statMore">&#8212;</div><div class="hl">Wanted more</div></div>
       <div class="hero-stat"><div class="hv hv-red" id="statStuffed">&#8212;</div><div class="hl">Overate</div></div>
     </div>
-    <div class="tracker-row">
+    <div class="tracker-row" style="grid-template-columns:1fr 1fr;grid-template-rows:auto auto;">
       <div class="tracker-card">
         <div class="tc-header"><div class="tc-title tc-blue">&#x1F4A7; Water</div><div style="font-size:11px;color:var(--text2)" id="waterCount">0 / 6</div></div>
         <div class="water-drops" id="waterDrops"></div>
         <div class="tc-sub" id="waterSub">Tap to log a glass</div>
+      </div>
+      <div class="tracker-card">
+        <div class="tc-header"><div class="tc-title" style="color:#a78bfa">&#x1F37A; Drinks</div><div style="font-size:11px;color:var(--text2)" id="alcoholCount">0 today</div></div>
+        <div style="display:flex;align-items:center;gap:12px;margin:8px 0">
+          <div style="font-size:36px;font-weight:700;color:#a78bfa" id="alcoholTally">0</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button onclick="changeAlcohol(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid rgba(167,139,250,0.4);background:rgba(167,139,250,0.15);color:#a78bfa;font-size:18px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;">+</button>
+            <button onclick="changeAlcohol(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:18px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;">−</button>
+          </div>
+        </div>
+        <div class="tc-sub" id="alcoholSub">Tap + to log a drink</div>
       </div>
       <div class="tracker-card">
         <div class="tc-header"><div class="tc-title tc-purple">&#x1F489; TRT</div><div style="font-size:10px;color:var(--text2)">0.35ml</div></div>
@@ -576,6 +587,7 @@ function getDayData(d){
   if(!data.days[d])data.days[d]={meals:{},reflection:"",closed:false,mood:"",water:0,trt:{}};
   MEALS.forEach(m=>{if(!data.days[d].meals[m.id])data.days[d].meals[m.id]=[];});
   if(data.days[d].water===undefined)data.days[d].water=0;
+  if(data.days[d].alcohol===undefined)data.days[d].alcohol=0;
   if(!data.days[d].trt)data.days[d].trt={};
   return data.days[d];
 }
@@ -642,6 +654,7 @@ async function pullFromDropbox(){
       merged.days[d]={
         ...winner,
         water:Math.max(ld.water||0,rd.water||0),
+        alcohol:Math.max(ld.alcohol||0,rd.alcohol||0),
         mood:rd.mood||ld.mood,
         closed:rd.closed||ld.closed,
         reflection:rd.reflection||ld.reflection,
@@ -724,7 +737,7 @@ function renderToday(){
   document.getElementById("statFull").textContent=total>0?full:"\u2014";
   document.getElementById("statMore").textContent=total>0?more:"\u2014";
   document.getElementById("statStuffed").textContent=total>0?stuffed:"\u2014";
-  renderWater(day);renderTRT(day);renderWeightProgress();renderMood(day);renderMealGrid(day);
+  renderWater(day);renderAlcohol(day);renderTRT(day);renderWeightProgress();renderMood(day);renderMealGrid(day);
 }
 function renderWater(day){
   const count=day.water||0;
@@ -737,6 +750,17 @@ function renderWater(day){
   }
 }
 function toggleWater(idx){const day=getDayData(viewDate);day.water=idx<day.water?idx:idx+1;saveData();renderWater(day);syncToDropbox();}
+function renderAlcohol(day){
+  const count=day.alcohol||0;
+  document.getElementById('alcoholTally').textContent=count;
+  document.getElementById('alcoholCount').textContent=count===0?'0 today':count+' drink'+(count===1?'':'s')+' today';
+  document.getElementById('alcoholSub').textContent=count===0?'Tap + to log a drink':'Tap + or \u2212 to adjust';
+}
+function changeAlcohol(delta){
+  const day=getDayData(viewDate);
+  day.alcohol=Math.max(0,(day.alcohol||0)+delta);
+  saveData();renderAlcohol(day);syncToDropbox();
+}
 function renderTRT(day){
   const wrap=document.getElementById("trtDays");wrap.innerHTML="";
   const names=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -1037,6 +1061,12 @@ function renderHistory(){
       sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
         '<span style="color:var(--blue);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Water</span><br>'+
         '<span style="font-size:13px;color:var(--text)">'+drops+' '+day.water+' of 6 glasses</span>'+
+        '</div>';
+    }
+    if(day.alcohol>0){
+      sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="color:#a78bfa;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Drinks</span><br>'+
+        '<span style="font-size:13px;color:var(--text)">\uD83C\uDF7A '+day.alcohol+' drink'+(day.alcohol===1?'':'s')+'</span>'+
         '</div>';
     }
 
