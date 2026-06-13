@@ -165,6 +165,11 @@
   .wl-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:14px;margin-left:auto;flex-shrink:0;}
   .wl-del:hover{background:var(--red-dim);color:var(--red);}
   .wl-empty{text-align:center;padding:48px 20px;color:var(--text2);font-size:14px;font-style:italic;}
+  .chart-range-btn{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text2);transition:all 0.15s;font-family:var(--font);}
+  .chart-range-btn.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
+  .wstat{background:var(--bg3);border-radius:10px;padding:10px 12px;text-align:center;}
+  .wstat .wsv{font-size:18px;font-weight:700;line-height:1;}
+  .wstat .wsl{font-size:10px;color:var(--text2);margin-top:4px;}
   .hidden{display:none!important;}
   @media(max-width:600px){.main{padding:14px 12px;}.hero-stats{grid-template-columns:repeat(2,1fr);}.tracker-row{grid-template-columns:1fr;}.meal-grid{grid-template-columns:repeat(2,1fr);}}
 </style>
@@ -273,13 +278,36 @@
 
   <div id="page-weight" class="main hidden">
     <div class="date-bar"><div><h2>Weight Tracker</h2><div class="date-sub">Log whenever you want</div></div></div>
-    <div class="section-card">
+    <!-- Quick log -->
+    <div class="section-card" style="margin-bottom:12px">
       <div class="section-head"><h3>Log Weight</h3></div>
       <div class="section-body">
         <div class="weight-log-row">
           <input type="number" id="weightInput" class="dark-input" placeholder="lbs" step="0.1" min="50" max="600" style="width:90px" />
           <button class="btn btn-blue" onclick="logWeight()">Log Weight</button>
         </div>
+      </div>
+    </div>
+    <!-- Stat cards -->
+    <div id="weightStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px"></div>
+    <!-- Chart -->
+    <div class="section-card" style="margin-bottom:12px">
+      <div class="section-head"><h3>Progress Chart</h3><span id="chartRange" style="font-size:12px;color:var(--text2)"></span></div>
+      <div class="section-body" style="padding:12px 12px 16px">
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <button class="chart-range-btn active" data-r="30" onclick="setChartRange(30,this)">30 days</button>
+          <button class="chart-range-btn" data-r="60" onclick="setChartRange(60,this)">60 days</button>
+          <button class="chart-range-btn" data-r="90" onclick="setChartRange(90,this)">90 days</button>
+          <button class="chart-range-btn" data-r="0"  onclick="setChartRange(0,this)">All time</button>
+        </div>
+        <canvas id="weightChart" style="width:100%;max-height:240px"></canvas>
+        <div id="weightChartEmpty" style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;padding:40px 0;display:none">Log at least 2 entries to see your chart.</div>
+      </div>
+    </div>
+    <!-- Log history -->
+    <div class="section-card">
+      <div class="section-head"><h3>Log</h3></div>
+      <div class="section-body" style="padding:8px 16px">
         <div id="weightEntries"></div>
       </div>
     </div>
@@ -694,14 +722,119 @@ function logWeight(){
   saveData();document.getElementById("weightInput").value="";
   renderWeightPage();renderWeightProgress();syncToDropbox();showToast("Weight logged!","success");
 }
+let weightChart=null;
+let chartRangeDays=30;
+function setChartRange(days,btn){
+  chartRangeDays=days;
+  document.querySelectorAll(".chart-range-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderWeightChart();
+}
 function renderWeightPage(){
   const c=document.getElementById("weightEntries");
-  if(!data.weight.length){c.innerHTML=`<div style="color:var(--text2);font-size:13px;font-style:italic;text-align:center;padding:16px;">No entries yet.</div>`;return;}
-  c.innerHTML=data.weight.slice(0,25).map((e,i)=>{
+  if(!data.weight.length){
+    c.innerHTML='<div style="color:var(--text2);font-size:13px;font-style:italic;text-align:center;padding:16px;">No entries yet.</div>';
+    document.getElementById("weightStats").innerHTML="";
+    return;
+  }
+  // Stat cards
+  const sorted=[...data.weight].sort((a,b)=>a.date.localeCompare(b.date));
+  const current=data.weight[0].weight;
+  const oldest=sorted[0].weight;
+  const totalChange=+(current-oldest).toFixed(1);
+  const goal=data.goalWeight;
+  const toGoal=goal?+(current-goal).toFixed(1):null;
+  const last7=data.weight.filter(w=>{
+    const d=new Date(w.date+"T12:00:00"),now=new Date();
+    return(now-d)/(1000*60*60*24)<=7;
+  });
+  const weekChange=last7.length>=2?+(last7[0].weight-last7[last7.length-1].weight).toFixed(1):null;
+  const statsEl=document.getElementById("weightStats");
+  statsEl.innerHTML=[
+    {val:current+" lbs",lbl:"Current",col:"var(--blue)"},
+    {val:(totalChange>0?"+":"")+totalChange+" lbs",lbl:"Total change",col:totalChange<0?"var(--green)":totalChange>0?"var(--red)":"var(--text2)"},
+    {val:weekChange!==null?(weekChange>0?"+":"")+weekChange+" lbs":"--",lbl:"This week",col:weekChange!==null&&weekChange<0?"var(--green)":weekChange>0?"var(--red)":"var(--text2)"},
+    {val:toGoal!==null?(toGoal<=0?"Goal reached!":toGoal+" to go"):"No goal set",lbl:"To goal",col:toGoal!==null&&toGoal<=0?"var(--green)":"var(--amber)"}
+  ].map(s=>'<div class="wstat"><div class="wsv" style="color:'+s.col+'">'+s.val+'</div><div class="wsl">'+s.lbl+'</div></div>').join("");
+  // Log list
+  c.innerHTML=data.weight.slice(0,30).map((e,i)=>{
     let delta="";
-    if(i<data.weight.length-1){const diff=+(e.weight-data.weight[i+1].weight).toFixed(1);delta=`<span class="${diff<0?"delta-down":diff>0?"delta-up":""}">${diff>0?"+":""}${diff} lbs</span>`;}
-    return `<div class="weight-entry-item"><span style="font-weight:700">${e.weight} lbs</span><span style="color:var(--text2);font-size:12px">${formatLabel(e.date)} \u00B7 ${e.time||""}</span>${delta}</div>`;
+    if(i<data.weight.length-1){const diff=+(e.weight-data.weight[i+1].weight).toFixed(1);delta='<span class="'+( diff<0?"delta-down":diff>0?"delta-up":"")+'">'+( diff>0?"+":"")+diff+" lbs</span>";}
+    return '<div class="weight-entry-item"><span style="font-weight:700">'+e.weight+' lbs</span><span style="color:var(--text2);font-size:12px">'+formatLabel(e.date)+' \u00B7 '+(e.time||"")+'</span>'+delta+'</div>';
   }).join("");
+  // Chart
+  renderWeightChart();
+}
+function renderWeightChart(){
+  const canvas=document.getElementById("weightChart");
+  const emptyEl=document.getElementById("weightChartEmpty");
+  if(!canvas)return;
+  let entries=[...data.weight].sort((a,b)=>a.date.localeCompare(b.date));
+  if(chartRangeDays>0){
+    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-chartRangeDays);
+    entries=entries.filter(w=>new Date(w.date+"T12:00:00")>=cutoff);
+  }
+  if(entries.length<2){canvas.style.display="none";emptyEl.style.display="block";return;}
+  canvas.style.display="block";emptyEl.style.display="none";
+  const labels=entries.map(e=>{
+    const d=new Date(e.date+"T12:00:00");
+    return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  });
+  const weights=entries.map(e=>e.weight);
+  const minW=Math.min(...weights)-2;
+  const maxW=Math.max(...weights)+2;
+  // Goal line
+  const goalData=data.goalWeight?entries.map(()=>data.goalWeight):null;
+  if(weightChart){weightChart.destroy();weightChart=null;}
+  weightChart=new Chart(canvas,{
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        {
+          label:"Weight",
+          data:weights,
+          borderColor:"#3b82f6",
+          backgroundColor:"rgba(59,130,246,0.08)",
+          borderWidth:2.5,
+          pointBackgroundColor:"#3b82f6",
+          pointRadius:4,
+          pointHoverRadius:6,
+          tension:0.3,
+          fill:true
+        },
+        ...(goalData?[{
+          label:"Goal",
+          data:goalData,
+          borderColor:"#10b981",
+          borderWidth:1.5,
+          borderDash:[6,4],
+          pointRadius:0,
+          fill:false
+        }]:[])
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{display:!!goalData,labels:{color:"#94a3b8",font:{size:11}}},
+        tooltip:{
+          backgroundColor:"#22263a",
+          titleColor:"#f1f5f9",
+          bodyColor:"#94a3b8",
+          borderColor:"rgba(255,255,255,0.1)",
+          borderWidth:1,
+          callbacks:{label:ctx=>ctx.dataset.label+": "+ctx.parsed.y+" lbs"}
+        }
+      },
+      scales:{
+        x:{ticks:{color:"#94a3b8",font:{size:10},maxTicksLimit:8},grid:{color:"rgba(255,255,255,0.04)"}},
+        y:{min:minW,max:maxW,ticks:{color:"#94a3b8",font:{size:10},callback:v=>v+" lbs"},grid:{color:"rgba(255,255,255,0.04)"}}
+      }
+    }
+  });
 }
 function checkWeightNag(){
   if(!data.weight.length)return;
@@ -908,5 +1041,6 @@ function renderWatchlist(){
 }
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </body>
 </html>
