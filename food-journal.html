@@ -350,6 +350,7 @@
         <div style="display:flex;gap:6px">
           <button class="chart-range-btn active" id="hChartToggleSleep" onclick="setHealthChartView('sleep',this)">&#x1F4A4; Sleep</button>
           <button class="chart-range-btn" id="hChartToggleEx" onclick="setHealthChartView('exercise',this)">&#x1F3CB;&#xFE0F; Workouts</button>
+          <button class="chart-range-btn" id="hChartToggleAlc" onclick="setHealthChartView('alcohol',this)">&#x1F37A; Drinks</button>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap" id="hChartRangeBtns">
           <button class="chart-range-btn active" data-r="30" onclick="setHealthChartRange(30,this)">30 days</button>
@@ -673,6 +674,18 @@ async function pullFromDropbox(){
     [...(remote.watchlist||[]),...(local.watchlist||[])].forEach(i=>{
       if(!wlSeen.has(i.id)){wlSeen.add(i.id);merged.watchlist.push(i);}
     });
+    // Merge sleep
+    const slSeen=new Set();
+    [...(remote.sleep||[]),...(local.sleep||[])].forEach(s=>{
+      if(!slSeen.has(s.id)){slSeen.add(s.id);merged.sleep.push(s);}
+    });
+    merged.sleep.sort((a,b)=>b.date.localeCompare(a.date));
+    // Merge exercise
+    const exSeen=new Set();
+    [...(remote.exercise||[]),...(local.exercise||[])].forEach(e=>{
+      if(!exSeen.has(e.id)){exSeen.add(e.id);merged.exercise.push(e);}
+    });
+    merged.exercise.sort((a,b)=>b.date.localeCompare(a.date));
     data=merged;
     localStorage.setItem("fj_data",JSON.stringify(data));
     renderToday();updateStreak();checkWeightNag();
@@ -1304,7 +1317,13 @@ function saveExercise(){
   renderHealthPage();syncToDropbox();showToast('Workout logged! \uD83D\uDCAA','success');
 }
 function deleteExercise(id){data.exercise=data.exercise.filter(e=>e.id!==id);saveData();renderHealthPage();syncToDropbox();}
-function setHealthChartView(view,btn){healthChartView=view;document.getElementById('hChartToggleSleep').classList.toggle('active',view==='sleep');document.getElementById('hChartToggleEx').classList.toggle('active',view==='exercise');renderHealthChart();}
+function setHealthChartView(view,btn){
+  healthChartView=view;
+  document.getElementById('hChartToggleSleep').classList.toggle('active',view==='sleep');
+  document.getElementById('hChartToggleEx').classList.toggle('active',view==='exercise');
+  document.getElementById('hChartToggleAlc').classList.toggle('active',view==='alcohol');
+  renderHealthChart();
+}
 function setHealthChartRange(days,btn){healthChartRangeDays=days;document.querySelectorAll('#hChartRangeBtns .chart-range-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHealthChart();}
 function renderHealthPage(){
   if(!data.sleep)data.sleep=[];if(!data.exercise)data.exercise=[];
@@ -1333,8 +1352,14 @@ function renderHealthChart(){
     if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
     canvas.style.display='block';emptyEl.style.display='none';
     healthChart=new Chart(canvas,{type:'bar',data:{labels:entries.map(s=>new Date(s.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Hours Slept',data:entries.map(s=>s.hours),backgroundColor:entries.map(s=>s.quality==='great'?'rgba(16,185,129,0.8)':s.quality==='okay'?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.8)'),borderColor:entries.map(s=>s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'),borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,callbacks:{label:ctx=>{const e=entries[ctx.dataIndex];return `${ctx.parsed.y}h \u00B7 ${e.quality} \u00B7 ${e.bedtime}\u2013${e.wake}`;}}}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{beginAtZero:true,max:12,ticks:{color:'#94a3b8',font:{size:10},callback:v=>v+'h'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
+  } else if(healthChartView==='alcohol'){
+    const days=data.days||{};
+    let entries=Object.entries(days).filter(([d,day])=>(day.alcohol||0)>0).map(([d,day])=>({date:d,count:day.alcohol})).sort((a,b)=>a.date.localeCompare(b.date));
+    if(cutoff)entries=entries.filter(e=>new Date(e.date+'T12:00:00')>=cutoff);
+    if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
+    canvas.style.display='block';emptyEl.style.display='none';
+    healthChart=new Chart(canvas,{type:'bar',data:{labels:entries.map(e=>new Date(e.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Drinks',data:entries.map(e=>e.count),backgroundColor:'rgba(167,139,250,0.7)',borderColor:'#a78bfa',borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,callbacks:{label:ctx=>ctx.parsed.y+' drink'+(ctx.parsed.y!==1?'s':'')}}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{beginAtZero:true,ticks:{color:'#94a3b8',font:{size:10},stepSize:1,precision:0},grid:{color:'rgba(255,255,255,0.04)'}}}}});
   } else {
-    let entries=[...data.exercise].sort((a,b)=>a.date.localeCompare(b.date));
     if(cutoff)entries=entries.filter(e=>new Date(e.date+'T12:00:00')>=cutoff);
     if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
     canvas.style.display='block';emptyEl.style.display='none';
