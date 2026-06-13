@@ -426,13 +426,6 @@
       <button class="btn btn-blue btn-sm" onclick="openAddItem()">+ Add</button>
     </div>
     <div id="watchlistContent"></div>
-    <!-- Manage custom categories -->
-    <div id="manageCatsSection" style="margin-top:18px;display:none">
-      <div class="section-card">
-        <div class="section-head"><h3>Manage Custom Categories</h3></div>
-        <div class="section-body" id="manageCatsList"></div>
-      </div>
-    </div>
   </div>
 
   <div id="page-settings" class="main hidden">
@@ -460,6 +453,10 @@
       <div class="settings-row"><span>Sync now</span><button class="btn btn-blue btn-sm" onclick="syncToDropbox()">Sync</button></div>
       <div class="settings-row"><span>Token expired?</span><button class="btn btn-ghost btn-sm" onclick="startDropboxOAuth()">&#x1F504; Reconnect Dropbox</button></div>
       <div class="settings-row"><span id="dropboxStatus" style="font-size:13px;color:var(--text2)">&#8212;</span></div>
+    </div>
+    <div class="settings-section">
+      <h3>Custom Categories</h3>
+      <div id="manageCatsList"><div style="font-size:13px;color:var(--text2);font-style:italic">No custom categories yet. Create one by selecting "+ New Category..." when adding to My List.</div></div>
     </div>
     <div class="settings-section">
       <h3>Data</h3>
@@ -799,6 +796,7 @@ function showTab(tab){
   if(tab==="weight")renderWeightPage();
   if(tab==="watchlist")renderWatchlist();
   if(tab==="health")renderHealthPage();
+  if(tab==="settings")renderCustomCats();
 }
 function changeDay(d){const dt=new Date(viewDate+"T12:00:00");dt.setDate(dt.getDate()+d);viewDate=dt.toISOString().slice(0,10);renderToday();}
 function goToday(){viewDate=getTodayStr();renderToday();}
@@ -1549,7 +1547,7 @@ function deleteCustomCat(cat){
   if(!confirm('Delete the "'+cat+'" category? Items already saved under it will keep the category label but it will no longer appear in the dropdown.'))return;
   const customs=getCustomCats().filter(c=>c!==cat);
   saveCustomCats(customs);
-  renderWatchlist();
+  renderCustomCats();
   showToast('"'+cat+'" removed from categories.','success');
 }
 
@@ -1598,12 +1596,14 @@ function renderWatchlist(){
     c.innerHTML=html;
   }
 
-  // Manage custom categories section
+  // Manage custom categories — always render in settings
+  renderCustomCats();
+}
+function renderCustomCats(){
   const customs=getCustomCats();
-  const mgmtSection=document.getElementById('manageCatsSection');
   const mgmtList=document.getElementById('manageCatsList');
+  if(!mgmtList)return;
   if(customs.length){
-    mgmtSection.style.display='block';
     mgmtList.innerHTML=customs.map(cat=>
       `<div class="health-log-item">
         <span style="font-size:13px">${esc(cat)}</span>
@@ -1611,7 +1611,7 @@ function renderWatchlist(){
       </div>`
     ).join('');
   } else {
-    mgmtSection.style.display='none';
+    mgmtList.innerHTML='<div style="font-size:13px;color:var(--text2);font-style:italic">No custom categories yet. Create one by selecting &ldquo;+ New Category&hellip;&rdquo; when adding to My List.</div>';
   }
 }
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
