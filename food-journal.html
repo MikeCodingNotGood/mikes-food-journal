@@ -710,27 +710,107 @@ function checkWeightNag(){
 }
 function renderHistory(){
   const c=document.getElementById("historyList");
-  const days=Object.keys(data.days).sort((a,b)=>b.localeCompare(a));
-  if(!days.length){c.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:14px;padding:48px;">No history yet.</div>`;return;}
-  const moodMap={great:"\uD83D\uDE04",good:"\uD83D\uDE42",meh:"\uD83D\uDE10",tired:"\uD83D\uDE34",stressed:"\uD83D\uDE24"};
+  // Collect all dates that have ANY activity
+  const dayDates=new Set(Object.keys(data.days));
+  // Also include dates where weight was logged
+  (data.weight||[]).forEach(w=>dayDates.add(w.date));
+  // Also include dates where Random items were added
+  (data.watchlist||[]).forEach(i=>dayDates.add(i.added));
+  const days=[...dayDates].sort((a,b)=>b.localeCompare(a));
+  if(!days.length){c.innerHTML='<div style="text-align:center;color:var(--text2);font-size:14px;padding:48px;">No history yet.</div>';return;}
+  const moodMap={great:"Great",good:"Good",meh:"Meh",tired:"Tired",stressed:"Stressed"};
+  const moodEmoji={great:"\uD83D\uDE04",good:"\uD83D\uDE42",meh:"\uD83D\uDE10",tired:"\uD83D\uDE34",stressed:"\uD83D\uDE24"};
   c.innerHTML=days.slice(0,60).map(d=>{
-    const day=data.days[d];let all=[];
-    MEALS.forEach(m=>(day.meals?.[m.id]||[]).forEach(e=>all.push({meal:m.label,...e})));
-    if(!all.length)return"";
-    return `<div class="history-card">
-      <div class="history-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">
-        <h3>${formatLabel(d)} <span style="color:var(--text2);font-size:11px;font-weight:400">${d}</span> ${day.mood?moodMap[day.mood]||"":""}</h3>
-        <span style="color:var(--text2);font-size:12px">${all.length} entr${all.length===1?"y":"ies"} ${day.closed?"\u2705":""}</span>
-      </div>
-      <div class="history-body" style="display:none">
-        ${all.map(e=>`<div style="padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span style="color:var(--blue);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">${e.meal}</span><br>
-          <span style="color:var(--text)">${esc(e.food)}</span>
-          ${e.fullness==="full"?`<span class="fb fb-full" style="margin-left:6px">\u2705 Full</span>`:e.fullness==="more"?`<span class="fb fb-more" style="margin-left:6px">\uD83D\uDE2C More</span>`:e.fullness==="stuffed"?`<span class="fb fb-stuffed" style="margin-left:6px">\uD83E\uDD26 Overate</span>`:""}
-        </div>`).join("")}
-        ${day.reflection?`<div style="margin-top:10px;padding:10px;background:var(--blue-dim);border-radius:6px;font-size:13px;color:#93c5fd;font-style:italic">"${esc(day.reflection)}"</div>`:""}
-      </div>
-    </div>`;
+    const day=data.days[d]||{meals:{},water:0,trt:{},mood:"",closed:false,reflection:""};
+    // Count total activity for summary
+    let mealCount=0;
+    MEALS.forEach(m=>mealCount+=(day.meals?.[m.id]||[]).length);
+    const weightEntries=(data.weight||[]).filter(w=>w.date===d);
+    const randomItems=(data.watchlist||[]).filter(i=>i.added===d);
+    const trtDone=Object.values(day.trt||{}).filter(Boolean).length;
+    const totalActivity=mealCount+(day.water||0)+weightEntries.length+randomItems.length+trtDone;
+    if(!totalActivity)return"";
+
+    // Build sections
+    let sections="";
+
+    // Mood
+    if(day.mood){
+      sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="color:var(--text2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Mood</span><br>'+
+        '<span style="font-size:13px;color:var(--text)">'+moodEmoji[day.mood]+' '+moodMap[day.mood]+'</span>'+
+        '</div>';
+    }
+
+    // Meals
+    MEALS.forEach(m=>{
+      const entries=day.meals?.[m.id]||[];
+      if(!entries.length)return;
+      entries.forEach(e=>{
+        const fbMap={full:'<span class="fb fb-full" style="margin-left:6px">\u2705 Full</span>',more:'<span class="fb fb-more" style="margin-left:6px">\uD83D\uDE2C More</span>',stuffed:'<span class="fb fb-stuffed" style="margin-left:6px">\uD83E\uDD26 Overate</span>'};
+        sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
+          '<span style="color:var(--blue);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">'+m.label+'</span>'+
+          (e.time?'<span style="color:var(--text3);font-size:10px;margin-left:6px">'+e.time+'</span>':'')+'<br>'+
+          '<span style="font-size:13px;color:var(--text)">'+esc(e.food)+'</span>'+
+          (e.fullness?fbMap[e.fullness]||'':'')
+          +'</div>';
+      });
+    });
+
+    // Water
+    if(day.water>0){
+      const drops="\uD83D\uDCA7".repeat(day.water);
+      sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="color:var(--blue);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Water</span><br>'+
+        '<span style="font-size:13px;color:var(--text)">'+drops+' '+day.water+' of 6 glasses</span>'+
+        '</div>';
+    }
+
+    // TRT
+    if(trtDone>0){
+      const names=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const doneNames=Object.entries(day.trt||{}).filter(([,v])=>v).map(([k])=>names[k]).join(", ");
+      sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="color:var(--purple);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">TRT</span><br>'+
+        '<span style="font-size:13px;color:var(--text)">\uD83D\uDC89 0.35ml ('+doneNames+')</span>'+
+        '</div>';
+    }
+
+    // Weight logged
+    if(weightEntries.length){
+      weightEntries.forEach(w=>{
+        sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
+          '<span style="color:var(--green);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Weight</span><br>'+
+          '<span style="font-size:13px;color:var(--text)">\u2696\uFE0F '+w.weight+' lbs'+
+          (w.time?' \u00B7 '+w.time:'')+'</span>'+
+          '</div>';
+      });
+    }
+
+    // Random items added
+    if(randomItems.length){
+      randomItems.forEach(i=>{
+        sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
+          '<span style="color:var(--amber);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Random \u00B7 '+i.cat+'</span><br>'+
+          '<span style="font-size:13px;color:var(--text)">'+esc(i.title)+'</span>'+
+          (i.rec?'<span style="font-size:11px;color:var(--text2);margin-left:6px">from '+esc(i.rec)+'</span>':'')+
+          '</div>';
+      });
+    }
+
+    // Reflection
+    if(day.reflection){
+      sections+='<div style="margin-top:4px;padding:10px;background:var(--blue-dim);border-radius:6px;font-size:13px;color:#93c5fd;font-style:italic">"'
+        +esc(day.reflection)+'"</div>';
+    }
+
+    return '<div class="history-card">'+
+      '<div class="history-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'block\'?\'none\':\'block\'">'+
+        '<h3>'+formatLabel(d)+' <span style="color:var(--text2);font-size:11px;font-weight:400">'+d+'</span> '+(day.mood?moodEmoji[day.mood]||"":"")+'</h3>'+
+        '<span style="color:var(--text2);font-size:12px">'+totalActivity+' item'+(totalActivity===1?"":"s")+(day.closed?" \u2705":"")+'</span>'+
+      '</div>'+
+      '<div class="history-body" style="display:none">'+sections+'</div>'+
+    '</div>';
   }).join("");
 }
 async function syncToDropbox(){
