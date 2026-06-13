@@ -451,6 +451,7 @@
         </div>
       </div>
       <div class="settings-row"><span>Sync now</span><button class="btn btn-blue btn-sm" onclick="syncToDropbox()">Sync</button></div>
+      <div class="settings-row"><span>Token expired?</span><button class="btn btn-ghost btn-sm" onclick="startDropboxOAuth()">&#x1F504; Reconnect Dropbox</button></div>
       <div class="settings-row"><span id="dropboxStatus" style="font-size:13px;color:var(--text2)">&#8212;</span></div>
     </div>
     <div class="settings-section">
@@ -599,6 +600,12 @@ async function pullFromDropbox(){
       method:"POST",
       headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE})}
     });
+    if(res.status===401){
+      showSyncBar(false,"Dropbox token expired \u2014 reconnect in Settings");
+      showToast("Dropbox token expired. Go to Settings \u2192 Dropbox to reconnect.","error");
+      document.getElementById("dropboxStatus").textContent="\u26A0\uFE0F Token expired \u2014 click Reconnect below";
+      return;
+    }
     if(res.status===409){showSyncBar(true,"No Dropbox data yet \u2014 starting fresh");return;}
     if(!res.ok){showSyncBar(false,"Could not load from Dropbox ("+res.status+")");return;}
     const remote=await res.json();
