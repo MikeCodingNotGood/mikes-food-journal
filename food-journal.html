@@ -337,7 +337,8 @@
       <button class="cat-btn" data-cat="Recipe"     onclick="selectCat(this)">Recipe</button>
       <button class="cat-btn" data-cat="Music"      onclick="selectCat(this)">Music / Album</button>
       <button class="cat-btn" data-cat="Book"       onclick="selectCat(this)">Book</button>
-      <button class="cat-btn" data-cat="Other"      onclick="selectCat(this)" style="grid-column:span 2">Other</button>
+      <button class="cat-btn" data-cat="Work"       onclick="selectCat(this)">Work</button>
+      <button class="cat-btn" data-cat="Other"      onclick="selectCat(this)">Other</button>
     </div>
     <input type="text" id="itemTitle" class="dark-input" placeholder="Title or name..." style="width:100%;margin-bottom:10px" />
     <input type="text" id="itemRec"   class="dark-input" placeholder="Recommended by... (optional)" style="width:100%;margin-bottom:10px" />
@@ -765,7 +766,7 @@ function showToast(msg,type){
 }
 
 // WATCHLIST
-const CAT_ORDER=['Movie','TV Show','Restaurant','Recipe','Music','Book','Other'];
+const CAT_ORDER=['Movie','TV Show','Restaurant','Recipe','Music','Book','Work','Other'];
 let selectedCat=null;
 function openAddItem(){
   selectedCat=null;
