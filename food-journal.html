@@ -175,7 +175,32 @@
   .wstat .wsv{font-size:18px;font-weight:700;line-height:1;}
   .wstat .wsl{font-size:10px;color:var(--text2);margin-top:4px;}
   .hidden{display:none!important;}
-  @media(max-width:600px){.main{padding:14px 12px;}.hero-stats{grid-template-columns:repeat(2,1fr);}.tracker-row{grid-template-columns:1fr;}.meal-grid{grid-template-columns:repeat(2,1fr);}}
+  /* Health Tab */
+  .health-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .health-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+  .health-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px;}
+  .hc-teal{color:#06b6d4;} .hc-orange{color:#f97316;}
+  .sleep-quality-btns{display:flex;gap:8px;margin:10px 0;}
+  .sq-btn{flex:1;padding:8px 6px;border-radius:10px;font-size:12px;font-weight:600;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text2);transition:all 0.15s;font-family:var(--font);text-align:center;}
+  .sq-btn:hover{border-color:#06b6d4;color:#06b6d4;}
+  .sq-btn.sel-great{border-color:#10b981;background:var(--green-dim);color:#10b981;}
+  .sq-btn.sel-okay{border-color:#f59e0b;background:var(--amber-dim);color:#f59e0b;}
+  .sq-btn.sel-rough{border-color:#ef4444;background:var(--red-dim);color:#ef4444;}
+  .time-inputs{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+  .time-inputs span{font-size:12px;color:var(--text2);}
+  .activity-type-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;}
+  .act-btn{padding:7px 4px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text2);transition:all 0.15s;font-family:var(--font);text-align:center;}
+  .act-btn:hover,.act-btn.sel{border-color:#f97316;background:rgba(249,115,22,0.15);color:#f97316;}
+  .health-log-item{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--bg3);border-radius:8px;font-size:13px;margin-bottom:6px;}
+  .health-log-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 5px;border-radius:4px;font-size:13px;}
+  .health-log-del:hover{background:var(--red-dim);color:var(--red);}
+  .hday-dot{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1px solid var(--border);color:var(--text3);}
+  .hday-dot.ex-done{background:rgba(249,115,22,0.2);border-color:#f97316;color:#f97316;}
+  .hday-dot.sl-great{background:var(--green-dim);border-color:#10b981;color:#10b981;}
+  .hday-dot.sl-okay{background:var(--amber-dim);border-color:#f59e0b;color:#f59e0b;}
+  .hday-dot.sl-rough{background:var(--red-dim);border-color:#ef4444;color:#ef4444;}
+  .health-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  @media(max-width:600px){.main{padding:14px 12px;}.hero-stats{grid-template-columns:repeat(2,1fr);}.tracker-row{grid-template-columns:1fr;}.meal-grid{grid-template-columns:repeat(2,1fr);}.health-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -207,6 +232,7 @@
   <div class="nav-tabs">
     <div class="nav-tab active" id="tab-today"    onclick="showTab('today')">Food</div>
     <div class="nav-tab"        id="tab-watchlist" onclick="showTab('watchlist')">Random</div>
+    <div class="nav-tab"        id="tab-health"   onclick="showTab('health')">Health</div>
     <div class="nav-tab"        id="tab-weight"   onclick="showTab('weight')">Weight</div>
     <div class="nav-tab"        id="tab-history"  onclick="showTab('history')">History</div>
     <div class="nav-tab"        id="tab-settings" onclick="showTab('settings')">Settings</div>
@@ -273,6 +299,87 @@
     </div>
     <div class="meal-grid" id="mealGrid"></div>
     <button class="close-day-btn" onclick="closeDay()">&#x2705; Close Out Today &amp; Reflect</button>
+  </div>
+
+  <div id="page-health" class="main hidden">
+    <div class="date-bar"><div><h2>Health</h2><div class="date-sub">Sleep &amp; Exercise</div></div></div>
+
+    <!-- Stats row -->
+    <div class="health-stat-row">
+      <div class="hero-stat"><div class="hv" style="color:#06b6d4" id="hStatSleep">&mdash;</div><div class="hl">Avg Sleep Quality</div></div>
+      <div class="hero-stat"><div class="hv" style="color:#f97316" id="hStatWorkouts">&mdash;</div><div class="hl">Workouts This Week</div></div>
+      <div class="hero-stat"><div class="hv" style="color:#10b981" id="hStatStreak">&mdash;</div><div class="hl">Exercise Streak</div></div>
+    </div>
+
+    <!-- Two column cards -->
+    <div class="health-grid">
+
+      <!-- SLEEP -->
+      <div class="health-card">
+        <div class="health-card-title hc-teal">&#x1F4A4; Sleep Log</div>
+        <div class="time-inputs">
+          <div>
+            <div style="font-size:10px;color:var(--text2);margin-bottom:4px">Bedtime</div>
+            <input type="time" id="sleepBedtime" class="dark-input" style="width:110px;padding:6px 8px;font-size:13px" />
+          </div>
+          <span style="margin-top:16px">&#8594;</span>
+          <div>
+            <div style="font-size:10px;color:var(--text2);margin-bottom:4px">Wake time</div>
+            <input type="time" id="sleepWake" class="dark-input" style="width:110px;padding:6px 8px;font-size:13px" />
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">How did you sleep?</div>
+        <div class="sleep-quality-btns">
+          <button class="sq-btn" data-q="great" onclick="selSleepQuality('great')">&#x1F60A; Great</button>
+          <button class="sq-btn" data-q="okay"  onclick="selSleepQuality('okay')">&#x1F610; Okay</button>
+          <button class="sq-btn" data-q="rough" onclick="selSleepQuality('rough')">&#x1F629; Rough</button>
+        </div>
+        <button class="btn btn-blue btn-sm" style="width:100%;justify-content:center;margin-top:4px" onclick="saveSleep()">Log Sleep</button>
+        <div style="margin-top:14px" id="sleepLogList"></div>
+      </div>
+
+      <!-- EXERCISE -->
+      <div class="health-card">
+        <div class="health-card-title hc-orange">&#x1F3CB;&#xFE0F; Exercise Log</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Activity type</div>
+        <div class="activity-type-grid" id="actTypeGrid">
+          <button class="act-btn" data-t="Gym"      onclick="selActType(this)">Gym</button>
+          <button class="act-btn" data-t="Walk"     onclick="selActType(this)">Walk</button>
+          <button class="act-btn" data-t="Run"      onclick="selActType(this)">Run</button>
+          <button class="act-btn" data-t="Bike"     onclick="selActType(this)">Bike</button>
+          <button class="act-btn" data-t="Swim"     onclick="selActType(this)">Swim</button>
+          <button class="act-btn" data-t="Other"    onclick="selActType(this)">Other</button>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Duration (minutes)</div>
+        <input type="number" id="exDuration" class="dark-input" placeholder="e.g. 45" min="1" max="300" style="width:100%;margin-bottom:10px" />
+        <button class="btn btn-blue btn-sm" style="width:100%;justify-content:center" onclick="saveExercise()">Log Workout</button>
+        <div style="margin-top:14px" id="exerciseLogList"></div>
+      </div>
+    </div>
+
+    <!-- 30-day visual calendar dots -->
+    <div class="section-card">
+      <div class="section-head"><h3>Last 30 Days</h3><span style="font-size:11px;color:var(--text2)">&#x1F7E0; workout &nbsp; &#x1F7E2; great sleep &nbsp; &#x1F7E1; okay sleep &nbsp; &#x1F534; rough sleep</span></div>
+      <div class="section-body">
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="healthCalDots"></div>
+      </div>
+    </div>
+
+    <!-- Exercise chart -->
+    <div class="section-card">
+      <div class="section-head"><h3>Workout Frequency</h3></div>
+      <div class="section-body" style="padding:12px 12px 16px">
+        <div style="display:flex;gap:6px;margin-bottom:12px" id="exChartRangeBtns">
+          <button class="chart-range-btn active" data-r="7"  onclick="setExChartRange(7,this)">7 days</button>
+          <button class="chart-range-btn"        data-r="30" onclick="setExChartRange(30,this)">30 days</button>
+          <button class="chart-range-btn"        data-r="60" onclick="setExChartRange(60,this)">60 days</button>
+          <button class="chart-range-btn"        data-r="90" onclick="setExChartRange(90,this)">90 days</button>
+          <button class="chart-range-btn"        data-r="0"  onclick="setExChartRange(0,this)">All time</button>
+        </div>
+        <canvas id="exerciseChart" style="width:100%;max-height:220px"></canvas>
+        <div id="exerciseChartEmpty" style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;padding:40px 0;display:none">Log at least one workout to see your chart.</div>
+      </div>
+    </div>
   </div>
 
   <div id="page-history" class="main hidden">
@@ -449,7 +556,7 @@ const MEALS=[
 const MOTIVATIONS=["Small wins compound. Every honest log is a step forward.","You showed up today. That's the whole game.","Awareness is the first move. You made it.","Progress isn't always visible — but it's happening.","One day at a time. You tracked. That matters.","You can't change what you don't see. Now you see it.","Consistency beats perfection every single time.","Tomorrow is a fresh start. You've got the data.","Every meal logged is a data point. You're learning yourself.","Done is better than perfect. You logged. That's the win."];
 let viewDate=getTodayStr(),data=loadData(),panelMealId=null,panelFullness=null;
 function getTodayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[]};if(!d.watchlist)d.watchlist=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[]};}}
+function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[]};}}
 function saveData(){localStorage.setItem("fj_data",JSON.stringify(data));checkWeightNag();}
 function getDayData(d){
   if(!data.days[d])data.days[d]={meals:{},reflection:"",closed:false,mood:"",water:0,trt:{}};
@@ -501,7 +608,7 @@ async function pullFromDropbox(){
     const remote=await res.json();
     if(!remote||typeof remote!=="object"){showSyncBar(false,"Invalid data from Dropbox");return;}
     const local=data;
-    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[]};
+    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[],sleep:[],exercise:[]};
     // Merge days - for each day pick the version with more water OR more meal entries OR closed status
     const allDays=new Set([...Object.keys(local.days||{}),...Object.keys(remote.days||{})]);
     allDays.forEach(d=>{
@@ -533,6 +640,18 @@ async function pullFromDropbox(){
     [...(remote.watchlist||[]),...(local.watchlist||[])].forEach(i=>{
       if(!wlSeen.has(i.id)){wlSeen.add(i.id);merged.watchlist.push(i);}
     });
+    // Merge sleep
+    const slSeen=new Set();
+    [...(remote.sleep||[]),...(local.sleep||[])].forEach(s=>{
+      if(!slSeen.has(s.id)){slSeen.add(s.id);merged.sleep.push(s);}
+    });
+    merged.sleep.sort((a,b)=>b.date.localeCompare(a.date));
+    // Merge exercise
+    const exSeen=new Set();
+    [...(remote.exercise||[]),...(local.exercise||[])].forEach(e=>{
+      if(!exSeen.has(e.id)){exSeen.add(e.id);merged.exercise.push(e);}
+    });
+    merged.exercise.sort((a,b)=>b.date.localeCompare(a.date));
     data=merged;
     localStorage.setItem("fj_data",JSON.stringify(data));
     renderToday();updateStreak();checkWeightNag();
@@ -571,13 +690,14 @@ function saveGoalWeight(){
   showToast("Goal weight saved!","success");renderWeightProgress();
 }
 function showTab(tab){
-  ["today","history","weight","watchlist","settings"].forEach(t=>{
+  ["today","history","weight","watchlist","settings","health"].forEach(t=>{
     document.getElementById("page-"+t).classList.toggle("hidden",t!==tab);
     document.getElementById("tab-"+t).classList.toggle("active",t===tab);
   });
   if(tab==="history")renderHistory();
   if(tab==="weight")renderWeightPage();
   if(tab==="watchlist")renderWatchlist();
+  if(tab==="health")renderHealthPage();
 }
 function changeDay(d){const dt=new Date(viewDate+"T12:00:00");dt.setDate(dt.getDate()+d);viewDate=dt.toISOString().slice(0,10);renderToday();}
 function goToday(){viewDate=getTodayStr();renderToday();}
@@ -1006,6 +1126,225 @@ function confirmClearData(){
 function showToast(msg,type){
   const t=document.getElementById("toast");t.textContent=msg;t.className="toast show"+(type?" toast-"+type:"");
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),3500);
+}
+
+// HEALTH TAB
+let selSleepQ=null,selActT=null,exChartRangeDays=7,exerciseChart=null;
+
+function selSleepQuality(q){
+  selSleepQ=q;
+  document.querySelectorAll('.sq-btn').forEach(b=>{
+    b.className='sq-btn';
+    if(b.dataset.q===q)b.classList.add('sel-'+q);
+  });
+}
+function selActType(btn){
+  selActT=btn.dataset.t;
+  document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function saveSleep(){
+  const bedtime=document.getElementById('sleepBedtime').value;
+  const wake=document.getElementById('sleepWake').value;
+  if(!bedtime||!wake){showToast('Enter both bedtime and wake time.','error');return;}
+  if(!selSleepQ){showToast('Pick a sleep quality first.','error');return;}
+  // Calculate duration
+  const [bh,bm]=bedtime.split(':').map(Number);
+  const [wh,wm]=wake.split(':').map(Number);
+  let mins=(wh*60+wm)-(bh*60+bm);
+  if(mins<0)mins+=1440; // crossed midnight
+  const hrs=(mins/60).toFixed(1);
+  if(!data.sleep)data.sleep=[];
+  data.sleep.unshift({id:Date.now(),date:getTodayStr(),bedtime,wake,quality:selSleepQ,hours:+hrs});
+  saveData();
+  // Reset
+  document.getElementById('sleepBedtime').value='';
+  document.getElementById('sleepWake').value='';
+  selSleepQ=null;
+  document.querySelectorAll('.sq-btn').forEach(b=>b.className='sq-btn');
+  renderHealthPage();syncToDropbox();
+  showToast('Sleep logged! \uD83D\uDCA4','success');
+}
+function deleteSleep(id){
+  data.sleep=data.sleep.filter(s=>s.id!==id);
+  saveData();renderHealthPage();syncToDropbox();
+}
+function saveExercise(){
+  const dur=parseInt(document.getElementById('exDuration').value);
+  if(!selActT){showToast('Pick an activity type first.','error');return;}
+  if(!dur||dur<1||dur>600){showToast('Enter a valid duration (minutes).','error');return;}
+  if(!data.exercise)data.exercise=[];
+  data.exercise.unshift({id:Date.now(),date:getTodayStr(),type:selActT,duration:dur,time:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})});
+  saveData();
+  document.getElementById('exDuration').value='';
+  selActT=null;
+  document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
+  renderHealthPage();syncToDropbox();
+  showToast('Workout logged! \uD83D\uDCAA','success');
+}
+function deleteExercise(id){
+  data.exercise=data.exercise.filter(e=>e.id!==id);
+  saveData();renderHealthPage();syncToDropbox();
+}
+function setExChartRange(days,btn){
+  exChartRangeDays=days;
+  document.querySelectorAll('#exChartRangeBtns .chart-range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderExerciseChart();
+}
+function renderHealthPage(){
+  if(!data.sleep)data.sleep=[];
+  if(!data.exercise)data.exercise=[];
+  const today=getTodayStr();
+
+  // --- Stats ---
+  // Avg sleep quality last 7 days
+  const last7sl=data.sleep.filter(s=>{const d=new Date(s.date+'T12:00:00'),now=new Date();return(now-d)/86400000<=7;});
+  const qMap={great:3,okay:2,rough:1};
+  const qLabel={great:'Great',okay:'Okay',rough:'Rough'};
+  const qAvg=last7sl.length?last7sl.reduce((a,s)=>a+(qMap[s.quality]||0),0)/last7sl.length:0;
+  const qTxt=qAvg>=2.5?'Great':qAvg>=1.5?'Okay':qAvg>0?'Rough':'—';
+  document.getElementById('hStatSleep').textContent=qTxt;
+
+  // Workouts this week (Mon–Sun)
+  const now=new Date();
+  const dayOfWeek=now.getDay();
+  const startOfWeek=new Date(now);startOfWeek.setDate(now.getDate()-((dayOfWeek+6)%7));startOfWeek.setHours(0,0,0,0);
+  const thisWeekEx=data.exercise.filter(e=>new Date(e.date+'T12:00:00')>=startOfWeek).length;
+  document.getElementById('hStatWorkouts').textContent=thisWeekEx;
+
+  // Exercise streak
+  let streak=0;
+  for(let i=0;i<365;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toISOString().slice(0,10);
+    if(data.exercise.some(e=>e.date===ds))streak++;
+    else if(i>0)break;
+  }
+  document.getElementById('hStatStreak').textContent=streak>0?streak+'d':'—';
+
+  // --- Sleep log list (today's entries) ---
+  const todaySleep=data.sleep.filter(s=>s.date===today);
+  const slList=document.getElementById('sleepLogList');
+  if(todaySleep.length){
+    slList.innerHTML=todaySleep.map(s=>`
+      <div class="health-log-item">
+        <div>
+          <span style="font-weight:700;color:${s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'}">${qLabel[s.quality]}</span>
+          <span style="color:var(--text2);font-size:12px;margin-left:6px">${s.bedtime} → ${s.wake} · ${s.hours}h</span>
+        </div>
+        <button class="health-log-del" onclick="deleteSleep(${s.id})">&#x2715;</button>
+      </div>`).join('');
+  } else {
+    slList.innerHTML='<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged yet tonight</div>';
+  }
+
+  // --- Exercise log list (today's entries) ---
+  const todayEx=data.exercise.filter(e=>e.date===today);
+  const exList=document.getElementById('exerciseLogList');
+  if(todayEx.length){
+    exList.innerHTML=todayEx.map(e=>`
+      <div class="health-log-item">
+        <div>
+          <span style="font-weight:700;color:#f97316">${e.type}</span>
+          <span style="color:var(--text2);font-size:12px;margin-left:6px">${e.duration} min · ${e.time}</span>
+        </div>
+        <button class="health-log-del" onclick="deleteExercise(${e.id})">&#x2715;</button>
+      </div>`).join('');
+  } else {
+    exList.innerHTML='<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged today</div>';
+  }
+
+  // --- 30-day calendar dots ---
+  const dotsEl=document.getElementById('healthCalDots');
+  let dotsHtml='';
+  for(let i=29;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toISOString().slice(0,10);
+    const dayLabel=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    const hasEx=data.exercise.some(e=>e.date===ds);
+    const slEntry=data.sleep.find(s=>s.date===ds);
+    let cls='hday-dot';
+    let title=dayLabel;
+    if(hasEx){cls+=' ex-done';title+=' · workout';}
+    if(slEntry){cls+=` sl-${slEntry.quality}`;title+=` · sleep: ${slEntry.quality}`;}
+    dotsHtml+=`<div class="${cls}" title="${title}">${d.getDate()}</div>`;
+  }
+  dotsEl.innerHTML=dotsHtml;
+
+  // Chart
+  renderExerciseChart();
+}
+function renderExerciseChart(){
+  if(!data.exercise)data.exercise=[];
+  const canvas=document.getElementById('exerciseChart');
+  const emptyEl=document.getElementById('exerciseChartEmpty');
+  if(!canvas)return;
+  if(!data.exercise.length){canvas.style.display='none';emptyEl.style.display='block';return;}
+
+  // Build weekly buckets
+  let entries=[...data.exercise].sort((a,b)=>a.date.localeCompare(b.date));
+  if(exChartRangeDays>0){
+    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-exChartRangeDays);
+    entries=entries.filter(e=>new Date(e.date+'T12:00:00')>=cutoff);
+  }
+  if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
+  canvas.style.display='block';emptyEl.style.display='none';
+
+  // Group by week (Mon) for ranges > 14 days, else by day
+  const groupByDay=exChartRangeDays<=14||exChartRangeDays===0&&entries.length<=14;
+  const buckets={};
+  entries.forEach(e=>{
+    let key;
+    if(groupByDay){
+      key=e.date;
+    } else {
+      const d=new Date(e.date+'T12:00:00');
+      const dow=d.getDay();
+      const mon=new Date(d);mon.setDate(d.getDate()-((dow+6)%7));
+      key=mon.toISOString().slice(0,10);
+    }
+    buckets[key]=(buckets[key]||0)+1;
+  });
+  const sortedKeys=Object.keys(buckets).sort();
+  const labels=sortedKeys.map(k=>{
+    const d=new Date(k+'T12:00:00');
+    return groupByDay?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):
+      'Wk '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  });
+  const counts=sortedKeys.map(k=>buckets[k]);
+
+  if(exerciseChart){exerciseChart.destroy();exerciseChart=null;}
+  exerciseChart=new Chart(canvas,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Workouts',
+        data:counts,
+        backgroundColor:'rgba(249,115,22,0.7)',
+        borderColor:'#f97316',
+        borderWidth:1.5,
+        borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',
+          borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+          callbacks:{label:ctx=>ctx.parsed.y+' workout'+(ctx.parsed.y!==1?'s':'')}
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:10},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{beginAtZero:true,ticks:{color:'#94a3b8',font:{size:10},stepSize:1,precision:0},grid:{color:'rgba(255,255,255,0.04)'}}
+      }
+    }
+  });
 }
 
 // WATCHLIST
