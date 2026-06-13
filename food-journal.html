@@ -693,20 +693,23 @@ async function pullFromDropbox(){
       if(!wSeen.has(key)){wSeen.add(key);merged.weight.push(w);}
     });
     merged.weight.sort((a,b)=>b.date.localeCompare(a.date));
-    // Merge watchlist
+    // Merge watchlist — local wins on conflicts (preserves deletes and done state)
+    const deletedIds=JSON.parse(localStorage.getItem('fj_deleted_wl')||'[]');
     const wlSeen=new Set();
-    [...(remote.watchlist||[]),...(local.watchlist||[])].forEach(i=>{
+    // Local first so local state (done toggle, deletes) wins
+    [...(local.watchlist||[]),...(remote.watchlist||[])].forEach(i=>{
+      if(deletedIds.includes(i.id))return; // skip deleted items
       if(!wlSeen.has(i.id)){wlSeen.add(i.id);merged.watchlist.push(i);}
     });
-    // Merge sleep
+    // Merge sleep — local first
     const slSeen=new Set();
-    [...(remote.sleep||[]),...(local.sleep||[])].forEach(s=>{
+    [...(local.sleep||[]),...(remote.sleep||[])].forEach(s=>{
       if(!slSeen.has(s.id)){slSeen.add(s.id);merged.sleep.push(s);}
     });
     merged.sleep.sort((a,b)=>b.date.localeCompare(a.date));
-    // Merge exercise
+    // Merge exercise — local first
     const exSeen=new Set();
-    [...(remote.exercise||[]),...(local.exercise||[])].forEach(e=>{
+    [...(local.exercise||[]),...(remote.exercise||[])].forEach(e=>{
       if(!exSeen.has(e.id)){exSeen.add(e.id);merged.exercise.push(e);}
     });
     merged.exercise.sort((a,b)=>b.date.localeCompare(a.date));
@@ -1405,7 +1408,13 @@ function saveItem(){
   showToast(title+' saved to My List!','success');
 }
 function toggleItem(id){const item=data.watchlist.find(i=>i.id===id);if(item){item.done=!item.done;saveData();renderWatchlist();syncToDropbox();}}
-function deleteItem(id){data.watchlist=data.watchlist.filter(i=>i.id!==id);saveData();renderWatchlist();syncToDropbox();}
+function deleteItem(id){
+  data.watchlist=data.watchlist.filter(i=>i.id!==id);
+  // Track deleted ID so it doesn't get resurrected from Dropbox on next sync
+  const deleted=JSON.parse(localStorage.getItem('fj_deleted_wl')||'[]');
+  if(!deleted.includes(id)){deleted.push(id);localStorage.setItem('fj_deleted_wl',JSON.stringify(deleted.slice(-200)));}
+  saveData();renderWatchlist();syncToDropbox();
+}
 function deleteCat(cat){
   if(!confirm('Remove "'+cat+'" from the list? Items saved under it are kept.'))return;
   saveAllCats(getAllCats().filter(c=>c!==cat));renderCustomCats();showToast('"'+cat+'" removed.','success');
