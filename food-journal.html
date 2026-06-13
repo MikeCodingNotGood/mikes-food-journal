@@ -233,6 +233,7 @@
     <div class="nav-tab"        id="tab-watchlist" onclick="showTab('watchlist')">Random</div>
     <div class="nav-tab"        id="tab-health"   onclick="showTab('health')">Health</div>
     <div class="nav-tab"        id="tab-weight"   onclick="showTab('weight')">Weight</div>
+    <div class="nav-tab"        id="tab-journal"  onclick="showTab('journal')">Journal</div>
     <div class="nav-tab"        id="tab-history"  onclick="showTab('history')">History</div>
     <div class="nav-tab"        id="tab-settings" onclick="showTab('settings')">Settings</div>
   </div>
@@ -351,6 +352,35 @@
       <div class="section-body" style="padding:12px 12px 16px">
         <canvas id="healthChart" style="width:100%;max-height:240px"></canvas>
         <div id="healthChartEmpty" style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;padding:40px 0;display:none">Nothing logged yet — start tracking to see your chart.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-journal" class="main hidden">
+    <div class="date-bar"><div><h2>Journal</h2><div class="date-sub">Your thoughts, logged.</div></div></div>
+
+    <!-- New entry -->
+    <div class="section-card" style="margin-bottom:12px">
+      <div class="section-head"><h3>&#x270F;&#xFE0F; New Entry</h3></div>
+      <div class="section-body">
+        <textarea id="journalInput" class="log-textarea" placeholder="What's on your mind? How are you feeling? What happened today worth remembering..." rows="4" style="min-height:100px"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px">
+          <button class="btn btn-blue" onclick="saveJournalEntry()">Save Entry</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's entries -->
+    <div id="journalTodaySection" style="margin-bottom:12px"></div>
+
+    <!-- Weekly Summary -->
+    <div class="section-card">
+      <div class="section-head" style="justify-content:space-between">
+        <h3>&#x1F4CA; Weekly Summary</h3>
+        <button class="btn btn-blue btn-sm" onclick="renderWeeklySummary()">Refresh</button>
+      </div>
+      <div class="section-body" id="weeklySummaryContent">
+        <div style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;padding:20px 0">Loading your week...</div>
       </div>
     </div>
   </div>
@@ -576,7 +606,7 @@ const MEALS=[
 const MOTIVATIONS=["Small wins compound. Every honest log is a step forward.","You showed up today. That's the whole game.","Awareness is the first move. You made it.","Progress isn't always visible — but it's happening.","One day at a time. You tracked. That matters.","You can't change what you don't see. Now you see it.","Consistency beats perfection every single time.","Tomorrow is a fresh start. You've got the data.","Every meal logged is a data point. You're learning yourself.","Done is better than perfect. You logged. That's the win."];
 let viewDate=getTodayStr(),data=loadData(),panelMealId=null,panelFullness=null;
 function getTodayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[]};}}
+function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];if(!d.journal)d.journal=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[]};}}
 function saveData(){localStorage.setItem("fj_data",JSON.stringify(data));checkWeightNag();}
 function getDayData(d){
   if(!data.days[d])data.days[d]={meals:{},reflection:"",closed:false,mood:"",water:0,trt:{}};
@@ -635,7 +665,7 @@ async function pullFromDropbox(){
     const remote=await res.json();
     if(!remote||typeof remote!=="object"){showSyncBar(false,"Invalid data from Dropbox");return;}
     const local=data;
-    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[],sleep:[],exercise:[]};
+    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[],sleep:[],exercise:[],journal:[]};
     // Merge days - for each day pick the version with more water OR more meal entries OR closed status
     const allDays=new Set([...Object.keys(local.days||{}),...Object.keys(remote.days||{})]);
     allDays.forEach(d=>{
@@ -680,6 +710,12 @@ async function pullFromDropbox(){
       if(!exSeen.has(e.id)){exSeen.add(e.id);merged.exercise.push(e);}
     });
     merged.exercise.sort((a,b)=>b.date.localeCompare(a.date));
+    // Merge journal
+    const jSeen=new Set();
+    [...(remote.journal||[]),...(local.journal||[])].forEach(e=>{
+      if(!jSeen.has(e.id)){jSeen.add(e.id);merged.journal.push(e);}
+    });
+    merged.journal.sort((a,b)=>b.id-a.id);
     data=merged;
     localStorage.setItem("fj_data",JSON.stringify(data));
     renderToday();updateStreak();checkWeightNag();
@@ -715,7 +751,7 @@ function saveGoalWeight(){
   showToast("Goal weight saved!","success");renderWeightProgress();
 }
 function showTab(tab){
-  ["today","history","weight","watchlist","settings","health"].forEach(t=>{
+  ["today","history","weight","watchlist","settings","health","journal"].forEach(t=>{
     document.getElementById("page-"+t).classList.toggle("hidden",t!==tab);
     document.getElementById("tab-"+t).classList.toggle("active",t===tab);
   });
@@ -723,6 +759,7 @@ function showTab(tab){
   if(tab==="weight")renderWeightPage();
   if(tab==="watchlist")renderWatchlist();
   if(tab==="health")renderHealthPage();
+  if(tab==="journal"){renderJournalPage();renderWeeklySummary();}
   if(tab==="settings"){renderCustomCats();renderQaSettingsList();}
 }
 function changeDay(d){const dt=new Date(viewDate+"T12:00:00");dt.setDate(dt.getDate()+d);viewDate=dt.toISOString().slice(0,10);renderToday();}
@@ -1012,6 +1049,7 @@ function renderHistory(){
   (data.watchlist||[]).forEach(i=>dayDates.add(i.added));
   (data.sleep||[]).forEach(s=>dayDates.add(s.date));
   (data.exercise||[]).forEach(e=>dayDates.add(e.date));
+  (data.journal||[]).forEach(j=>dayDates.add(j.date));
   const days=[...dayDates].sort((a,b)=>b.localeCompare(a));
   if(!days.length){c.innerHTML='<div style="text-align:center;color:var(--text2);font-size:14px;padding:48px;">No history yet.</div>';return;}
   const moodMap={great:"Great",good:"Good",meh:"Meh",tired:"Tired",stressed:"Stressed"};
@@ -1024,8 +1062,9 @@ function renderHistory(){
     const randomItems=(data.watchlist||[]).filter(i=>i.added===d);
     const sleepEntries=(data.sleep||[]).filter(s=>s.date===d);
     const exerciseEntries=(data.exercise||[]).filter(e=>e.date===d);
+    const journalEntries=(data.journal||[]).filter(j=>j.date===d);
     const trtDone=Object.values(day.trt||{}).filter(Boolean).length;
-    const totalActivity=mealCount+(day.water||0)+(day.alcohol||0)+weightEntries.length+randomItems.length+trtDone+sleepEntries.length+exerciseEntries.length;
+    const totalActivity=mealCount+(day.water||0)+(day.alcohol||0)+weightEntries.length+randomItems.length+trtDone+sleepEntries.length+exerciseEntries.length+journalEntries.length;
     if(!totalActivity)return"";
 
     let sections="";
@@ -1123,6 +1162,17 @@ function renderHistory(){
       });
     }
 
+    // Journal entries
+    if(journalEntries.length){
+      journalEntries.forEach(j=>{
+        sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
+          '<span style="color:#f472b6;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Journal</span>'+
+          '<span style="color:var(--text3);font-size:10px;margin-left:6px">'+j.time+'</span><br>'+
+          '<span style="font-size:13px;color:var(--text)">'+esc(j.text)+'</span>'+
+          '</div>';
+      });
+    }
+
     // Reflection
     if(day.reflection){
       sections+='<div style="margin-top:4px;padding:10px;background:var(--blue-dim);border-radius:6px;font-size:13px;color:#93c5fd;font-style:italic">"'+esc(day.reflection)+'"</div>';
@@ -1165,6 +1215,109 @@ function confirmClearData(){
 function showToast(msg,type){
   const t=document.getElementById("toast");t.textContent=msg;t.className="toast show"+(type?" toast-"+type:"");
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),3500);
+}
+
+// JOURNAL
+function saveJournalEntry(){
+  const text=document.getElementById('journalInput').value.trim();
+  if(!text){showToast('Write something first.','error');return;}
+  if(!data.journal)data.journal=[];
+  const now=new Date();
+  data.journal.unshift({id:Date.now(),date:getTodayStr(),time:now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}),text});
+  saveData();document.getElementById('journalInput').value='';
+  renderJournalPage();syncToDropbox();showToast('Journal entry saved \u270F\uFE0F','success');
+}
+function deleteJournalEntry(id){
+  data.journal=data.journal.filter(j=>j.id!==id);
+  saveData();renderJournalPage();syncToDropbox();
+}
+function renderJournalPage(){
+  if(!data.journal)data.journal=[];
+  const today=getTodayStr();
+  const todayEntries=data.journal.filter(j=>j.date===today);
+  const pastEntries=data.journal.filter(j=>j.date!==today);
+  const grouped={};
+  pastEntries.forEach(j=>{if(!grouped[j.date])grouped[j.date]=[];grouped[j.date].push(j);});
+  const pastDates=Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
+  let html='';
+  if(todayEntries.length){
+    html+='<div class="section-card" style="margin-bottom:12px"><div class="section-head"><h3>Today</h3></div><div class="section-body" style="padding:8px 16px">';
+    html+=todayEntries.map(j=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start"><div style="flex:1"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">${j.time}</div><div style="font-size:14px;color:var(--text);line-height:1.6;white-space:pre-wrap">${esc(j.text)}</div></div><button class="health-log-del" onclick="deleteJournalEntry(${j.id})" style="flex-shrink:0;margin-top:2px">&#x2715;</button></div>`).join('');
+    html+='</div></div>';
+  }
+  pastDates.slice(0,14).forEach(date=>{
+    const entries=grouped[date];
+    html+='<div class="section-card" style="margin-bottom:8px"><div class="history-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'block\'?\'none\':\'block\'"><h3>'+formatLabel(date)+' <span style="color:var(--text2);font-size:11px;font-weight:400">'+date+'</span></h3><span style="color:var(--text2);font-size:12px">'+entries.length+' entr'+(entries.length===1?'y':'ies')+'</span></div>';
+    html+='<div class="history-body" style="display:none;padding:8px 16px">';
+    html+=entries.map(j=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start"><div style="flex:1"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">${j.time}</div><div style="font-size:14px;color:var(--text);line-height:1.6;white-space:pre-wrap">${esc(j.text)}</div></div><button class="health-log-del" onclick="deleteJournalEntry(${j.id})" style="flex-shrink:0;margin-top:2px">&#x2715;</button></div>`).join('');
+    html+='</div></div>';
+  });
+  if(!todayEntries.length&&!pastDates.length){
+    html='<div style="text-align:center;color:var(--text2);font-size:14px;font-style:italic;padding:32px 0">Nothing journaled yet. Write your first entry above.</div>';
+  }
+  document.getElementById('journalTodaySection').innerHTML=html;
+}
+function renderWeeklySummary(){
+  const content=document.getElementById('weeklySummaryContent');
+  const now=new Date();
+  const weekDays=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);weekDays.push(d.toISOString().slice(0,10));}
+  const fmt=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const weekLabel=fmt(weekDays[0])+' \u2013 '+fmt(weekDays[6]);
+
+  let meals=0,fullCount=0,water=0,alcohol=0;
+  const moodCounts={};
+  weekDays.forEach(d=>{
+    const day=data.days[d];if(!day)return;
+    MEALS.forEach(m=>(day.meals?.[m.id]||[]).forEach(e=>{meals++;if(e.fullness==='full')fullCount++;}));
+    water+=day.water||0;alcohol+=day.alcohol||0;
+    if(day.mood)moodCounts[day.mood]=(moodCounts[day.mood]||0)+1;
+  });
+  const sleepEntries=(data.sleep||[]).filter(s=>weekDays.includes(s.date));
+  const avgSleep=sleepEntries.length?(sleepEntries.reduce((a,s)=>a+(s.hours||0),0)/sleepEntries.length).toFixed(1):null;
+  const sleepQC={great:0,okay:0,rough:0};sleepEntries.forEach(s=>{if(sleepQC[s.quality]!==undefined)sleepQC[s.quality]++;});
+  const workouts=(data.exercise||[]).filter(e=>weekDays.includes(e.date));
+  const journalEntries=(data.journal||[]).filter(j=>weekDays.includes(j.date));
+  const dominantMood=Object.entries(moodCounts).sort((a,b)=>b[1]-a[1])[0];
+  const moodEmoji={great:'\uD83D\uDE04',good:'\uD83D\uDE42',meh:'\uD83D\uDE10',tired:'\uD83D\uDE34',stressed:'\uD83D\uDE24'};
+  const latestWeight=data.weight?.[0];
+
+  const stat=(icon,label,val,color='var(--text)')=>
+    `<div style="background:var(--bg3);border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:22px;font-weight:700;color:${color}">${val}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:3px">${icon} ${label}</div>
+    </div>`;
+
+  content.innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px;text-align:center">${weekLabel}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
+      ${stat('\uD83C\uDF7D\uFE0F','Meals logged',meals,'var(--blue)')}
+      ${stat('\uD83D\uDCA7','Water glasses',water,'var(--blue)')}
+      ${stat('\uD83C\uDFCB\uFE0F','Workouts',workouts.length,'#f97316')}
+      ${stat('\uD83D\uDCA4','Avg sleep',avgSleep?avgSleep+'h':'—','#06b6d4')}
+      ${stat('\uD83D\uDE0A','Best mood',dominantMood?moodEmoji[dominantMood[0]]+' '+dominantMood[0]:'—','var(--amber)')}
+      ${stat('\uD83C\uDF7A','Drinks',alcohol,'#a78bfa')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
+      ${stat('\u2705','Felt full',fullCount,'var(--green)')}
+      ${stat('\uD83D\uDCA4','Sleep nights',sleepEntries.length,'#06b6d4')}
+      ${stat('\u270F\uFE0F','Journal entries',journalEntries.length,'#f472b6')}
+    </div>
+    ${sleepEntries.length?`
+    <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Sleep Quality</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:${sleepQC.great};background:#10b981;border-radius:4px;height:8px;min-width:${sleepQC.great?'4px':'0'}"></div>
+        <div style="flex:${sleepQC.okay};background:#f59e0b;border-radius:4px;height:8px;min-width:${sleepQC.okay?'4px':'0'}"></div>
+        <div style="flex:${sleepQC.rough};background:#ef4444;border-radius:4px;height:8px;min-width:${sleepQC.rough?'4px':'0'}"></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--text2)">
+        <span style="color:#10b981">\u2022 ${sleepQC.great} great</span>
+        <span style="color:#f59e0b">\u2022 ${sleepQC.okay} okay</span>
+        <span style="color:#ef4444">\u2022 ${sleepQC.rough} rough</span>
+      </div>
+    </div>`:''}
+    ${latestWeight?`<div style="background:var(--bg3);border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--text2)">Current weight</span><span style="font-size:16px;font-weight:700;color:var(--green)">${latestWeight.weight} lbs${data.goalWeight?' <span style="font-size:12px;color:var(--text2);font-weight:400">/ goal '+data.goalWeight+' lbs</span>':''}</span></div>`:''}
+  `;
 }
 
 // QUICK ADD
