@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Food Journal</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue:        #0066ff;
+    --blue-dark:   #0047b3;
+    --blue-deeper: #003380;
+    --blue-light:  #e6f0ff;
+    --blue-mid:    #b3cfff;
+    --navy:        #1a2a4a;
+    --gray:        #6b7280;
+    --gray-light:  #f3f6fb;
+    --border:      #dde4f0;
+    --white:       #ffffff;
+    --danger:      #dc2626;
+    --amber:       #d97706;
+    --success:     #059669;
+    --radius:      10px;
+    --font:        'Segoe UI', system-ui, Arial, sans-serif;
+  }
+
+  body { font-family: var(--font); background: #eef2fa; color: var(--navy); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: var(--blue-deeper); color: white; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .app-header .brand { display: flex; align-items: center; gap: 10px; }
+  .app-header h1 { font-size: 18px; font-weight: 700; }
+  .app-header .sub { font-size: 11px; opacity: 0.65; margin-top: 2px; }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; transition: all 0.15s; font-family: var(--font);
+  }
+  .btn-blue  { background: var(--blue); color: white; }
+  .btn-blue:hover { background: var(--blue-dark); }
+  .btn-outline-white { background: transparent; border: 1px solid rgba(255,255,255,0.45); color: white; }
+  .btn-outline-white:hover { background: rgba(255,255,255,0.12); }
+  .btn-outline { background: white; border: 1px solid var(--border); color: var(--navy); }
+  .btn-outline:hover { background: var(--gray-light); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    background: white; border-bottom: 1px solid var(--border);
+    display: flex; padding: 0 24px; overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 13px 18px; font-size: 13px; font-weight: 500; color: var(--gray);
+    cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s;
+  }
+  .nav-tab:hover { color: var(--blue); }
+  .nav-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* ── MAIN ── */
+  .main { max-width: 860px; margin: 0 auto; padding: 24px 20px; }
+
+  /* ── DATE BAR ── */
+  .date-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .date-bar h2 { font-size: 21px; font-weight: 700; }
+  .date-bar .date-sub { font-size: 13px; color: var(--gray); margin-top: 3px; }
+  .date-nav { display: flex; gap: 6px; }
+  .date-nav button {
+    background: white; border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 11px; cursor: pointer; font-size: 13px; color: var(--navy); font-family: var(--font);
+  }
+  .date-nav button:hover { background: var(--blue-light); border-color: var(--blue-mid); color: var(--blue); }
+
+  /* ── DAY SUMMARY ── */
+  .day-summary { background: white; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
+  .summary-header { padding: 14px 18px; background: var(--blue); color: white; display: flex; justify-content: space-between; align-items: center; }
+  .summary-header h3 { font-size: 15px; font-weight: 600; }
+  .summary-body { padding: 16px 18px; }
+  .summary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+  .stat-card { background: var(--gray-light); border-radius: 8px; padding: 10px 12px; text-align: center; }
+  .stat-val { font-size: 24px; font-weight: 700; color: var(--blue); }
+  .stat-lbl { font-size: 11px; color: var(--gray); margin-top: 3px; }
+  .motivation-banner {
+    margin-top: 14px; padding: 12px 16px;
+    background: var(--blue-light); border-left: 3px solid var(--blue);
+    border-radius: 0 8px 8px 0; font-size: 14px; color: var(--blue-deeper); font-style: italic; line-height: 1.55;
+  }
+
+  /* ── MEAL SECTIONS ── */
+  .meal-section { background: white; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; }
+  .meal-header { display: flex; align-items: center; justify-content: space-between; padding: 11px 16px; background: var(--gray-light); border-bottom: 1px solid var(--border); }
+  .meal-title { display: flex; align-items: center; gap: 8px; }
+  .meal-icon { font-size: 17px; }
+  .meal-label { font-weight: 600; font-size: 14px; }
+  .meal-count { font-size: 11px; color: var(--blue-dark); background: var(--blue-light); padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .meal-entries { padding: 8px 16px; }
+  .entry-card { display: flex; align-items: flex-start; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f0f4fa; gap: 10px; }
+  .entry-card:last-child { border-bottom: none; }
+  .entry-food { font-size: 14px; line-height: 1.5; flex: 1; }
+  .entry-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+  .entry-time { font-size: 11px; color: var(--gray); }
+  .fullness-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .fullness-full    { background: #d1fae5; color: #065f46; }
+  .fullness-more    { background: #fef3c7; color: #92400e; }
+  .fullness-stuffed { background: #fee2e2; color: #991b1b; }
+  .icon-btn { background: none; border: none; cursor: pointer; padding: 4px 5px; color: var(--gray); border-radius: 4px; font-size: 13px; }
+  .icon-btn:hover { background: #fee2e2; color: var(--danger); }
+  .empty-meal { padding: 14px 0; text-align: center; color: #a0aec0; font-size: 13px; font-style: italic; }
+
+  /* ── LOG AREA ── */
+  .log-area { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .log-textarea {
+    width: 100%; border: 1px solid var(--border); border-radius: 6px;
+    padding: 9px 11px; font-size: 13px; font-family: var(--font);
+    resize: none; min-height: 68px; outline: none; transition: border 0.15s; color: var(--navy);
+  }
+  .log-textarea:focus { border-color: var(--blue); }
+  .log-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .log-controls label { font-size: 12px; font-weight: 600; color: var(--gray); }
+  .fullness-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fullness-btn {
+    padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    border: 1.5px solid var(--border); cursor: pointer; background: white; color: var(--navy);
+    transition: all 0.15s; font-family: var(--font);
+  }
+  .fullness-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .fullness-btn.sel-full    { border-color: #059669; background: #d1fae5; color: #065f46; }
+  .fullness-btn.sel-more    { border-color: #d97706; background: #fef3c7; color: #92400e; }
+  .fullness-btn.sel-stuffed { border-color: #dc2626; background: #fee2e2; color: #991b1b; }
+  .log-save-row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-toggle-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px 14px; background: none; border: 1.5px dashed var(--blue-mid);
+    border-radius: 6px; color: var(--blue); font-size: 13px; cursor: pointer;
+    width: 100%; margin-top: 6px; transition: all 0.15s; font-family: var(--font);
+  }
+  .add-toggle-btn:hover { background: var(--blue-light); border-color: var(--blue); }
+
+  /* ── CLOSE DAY ── */
+  .close-day-btn {
+    background: var(--blue); color: white; border: none; border-radius: 8px;
+    padding: 14px 24px; font-size: 15px; font-weight: 600;
+    cursor: pointer; width: 100%; margin-top: 8px; transition: background 0.15s; font-family: var(--font);
+  }
+  .close-day-btn:hover { background: var(--blue-dark); }
+
+  /* ── WEIGHT ── */
+  .weight-section { background: white; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 14px; }
+  .weight-header { padding: 12px 16px; background: var(--gray-light); border-bottom: 1px solid var(--border); }
+  .weight-header h3 { font-size: 14px; font-weight: 600; }
+  .weight-body { padding: 16px; }
+  .weight-log-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .weight-input { border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 14px; width: 100px; outline: none; font-family: var(--font); color: var(--navy); }
+  .weight-input:focus { border-color: var(--blue); }
+  .weight-entries { display: flex; flex-direction: column; gap: 6px; }
+  .weight-entry { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: var(--gray-light); border-radius: 6px; font-size: 13px; }
+  .delta-down { color: var(--success); font-weight: 700; }
+  .delta-up   { color: var(--danger);  font-weight: 700; }
+  .delta-same { color: var(--gray);    font-weight: 700; }
+
+  /* ── HISTORY ── */
+  .history-card { background: white; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
+  .history-date-header { padding: 11px 16px; background: var(--gray-light); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .history-date-header:hover { background: var(--blue-light); }
+  .history-date-header h3 { font-size: 14px; font-weight: 600; }
+  .history-entries { padding: 10px 16px; }
+
+  /* ── SETUP SCREEN ── */
+  .setup-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #eef2fa 0%, #dce8ff 100%); padding: 24px;
+  }
+  .setup-card {
+    background: white; border-radius: 16px; border: 1px solid var(--border);
+    padding: 40px 36px; max-width: 480px; width: 100%;
+    box-shadow: 0 4px 24px rgba(0,102,255,0.08);
+  }
+  .setup-card .logo { font-size: 48px; text-align: center; margin-bottom: 16px; }
+  .setup-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; text-align: center; }
+  .setup-card .subtitle { font-size: 14px; color: var(--gray); text-align: center; line-height: 1.6; margin-bottom: 28px; }
+  .setup-step { display: flex; gap: 14px; margin-bottom: 20px; align-items: flex-start; }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--blue); color: white;
+    font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+  }
+  .step-text { font-size: 13px; line-height: 1.65; color: var(--navy); }
+  .step-text a { color: var(--blue); }
+  .step-text code { background: var(--gray-light); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  .token-input-row { display: flex; gap: 8px; margin-top: 20px; }
+  .token-input {
+    flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px;
+    font-size: 13px; font-family: var(--font); outline: none; color: var(--navy);
+  }
+  .token-input:focus { border-color: var(--blue); }
+  .setup-skip { background: none; border: none; color: var(--gray); font-size: 13px; cursor: pointer; text-decoration: underline; font-family: var(--font); display: block; text-align: center; margin-top: 14px; }
+
+  /* ── SYNC BAR ── */
+  .sync-bar { display: flex; align-items: center; gap: 8px; padding: 7px 18px; background: var(--blue-light); border-bottom: 1px solid var(--blue-mid); font-size: 12px; color: var(--blue-deeper); }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
+  .sync-bar.sync-error { background: #fee2e2; border-bottom-color: #fca5a5; color: #991b1b; }
+  .sync-bar.sync-error .sync-dot { background: var(--danger); }
+
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,20,60,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 20px; }
+  .modal { background: white; border-radius: var(--radius); max-width: 490px; width: 100%; padding: 28px; box-shadow: 0 8px 40px rgba(0,40,120,0.18); }
+  .modal h3 { font-size: 19px; font-weight: 700; margin-bottom: 8px; }
+  .modal p  { font-size: 14px; color: var(--gray); line-height: 1.6; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* ── SETTINGS ── */
+  .settings-section { background: white; border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; margin-bottom: 14px; }
+  .settings-section h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--blue); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 14px; }
+  .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 14px; color: var(--navy); }
+  .settings-row + .settings-row { border-top: 1px solid #f0f4fa; }
+  .settings-row label { font-size: 13px; color: var(--gray); display: block; margin-bottom: 6px; }
+  .settings-input { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: var(--font); outline: none; color: var(--navy); }
+  .settings-input:focus { border-color: var(--blue); }
+
+  /* ── TOAST ── */
+  .toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; background: var(--navy); color: white; padding: 12px 18px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; max-width: 300px; line-height: 1.5; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .toast.toast-success { background: var(--success); }
+  .toast.toast-error   { background: var(--danger); }
+  .toast.toast-blue    { background: var(--blue); }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 600px) {
+    .main { padding: 14px 12px; }
+    .app-header h1 { font-size: 16px; }
+    .summary-stats { grid-template-columns: repeat(2,1fr); }
+    .setup-card { padding: 28px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── SETUP / TOKEN SCREEN ───────────────────────────────────────────────── -->
+<div id="setupScreen" class="setup-screen">
+  <div class="setup-card">
+    <div class="logo">🥗</div>
+    <h2>Food Journal</h2>
+    <p class="subtitle">Connect your Dropbox to keep your data backed up privately — or skip and use locally.</p>
+
+    <div class="setup-step">
+      <div class="step-num">1</div>
+      <div class="step-text">Go to <a href="https://www.dropbox.com/developers/apps" target="_blank">dropbox.com/developers/apps</a> and click <strong>Create app</strong>.</div>
+    </div>
+    <div class="setup-step">
+      <div class="step-num">2</div>
+      <div class="step-text">Choose <strong>Scoped access</strong> → <strong>App folder</strong>. Name it anything (e.g. <code>FoodJournal</code>). Click <strong>Create app</strong>.</div>
+    </div>
+    <div class="setup-step">
+      <div class="step-num">3</div>
+      <div class="step-text">On the app's Settings page, scroll to <strong>OAuth 2</strong> → under <em>Generated access token</em> click <strong>Generate</strong>. Copy that token.</div>
+    </div>
+    <div class="setup-step">
+      <div class="step-num">4</div>
+      <div class="step-text">Paste it below and hit Connect.</div>
+    </div>
+
+    <div class="token-input-row">
+      <input type="password" id="tokenInput" class="token-input" placeholder="Paste your Dropbox access token here" />
+      <button class="btn btn-blue" onclick="connectDropbox()">Connect</button>
+    </div>
+    <button class="setup-skip" onclick="skipSetup()">Skip for now — save locally only</button>
+  </div>
+</div>
+
+<!-- ── MAIN APP ───────────────────────────────────────────────────────────── -->
+<div id="appMain" class="hidden">
+
+  <header class="app-header">
+    <div class="brand">
+      <span style="font-size:22px">🥗</span>
+      <div>
+        <h1>Food Journal</h1>
+        <div class="sub">Know what you ate. Learn from it.</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-outline-white btn-sm" onclick="syncToDropbox()">☁ Sync</button>
+    </div>
+  </header>
+
+  <div id="syncBar" class="sync-bar hidden">
+    <div class="sync-dot"></div>
+    <span id="syncMsg"></span>
+  </div>
+
+  <div class="nav-tabs">
+    <div class="nav-tab active" id="tab-today"    onclick="showTab('today')">Today</div>
+    <div class="nav-tab"        id="tab-history"  onclick="showTab('history')">History</div>
+    <div class="nav-tab"        id="tab-weight"   onclick="showTab('weight')">Weight</div>
+    <div class="nav-tab"        id="tab-settings" onclick="showTab('settings')">Settings</div>
+  </div>
+
+  <!-- TODAY -->
+  <div id="page-today" class="main">
+    <div class="date-bar">
+      <div>
+        <h2 id="todayLabel">Today</h2>
+        <div class="date-sub" id="todayDate"></div>
+      </div>
+      <div class="date-nav">
+        <button onclick="changeDay(-1)">&#8592;</button>
+        <button onclick="goToday()">Today</button>
+        <button onclick="changeDay(1)">&#8594;</button>
+      </div>
+    </div>
+
+    <div class="day-summary">
+      <div class="summary-header">
+        <h3>Day at a Glance</h3>
+        <span id="daySummaryDate" style="font-size:13px;opacity:0.85"></span>
+      </div>
+      <div class="summary-body">
+        <div class="summary-stats">
+          <div class="stat-card"><div class="stat-val" id="statMeals">0</div><div class="stat-lbl">Meals logged</div></div>
+          <div class="stat-card"><div class="stat-val" id="statFull">—</div><div class="stat-lbl">Felt full</div></div>
+          <div class="stat-card"><div class="stat-val" id="statMore">—</div><div class="stat-lbl">Wanted more</div></div>
+          <div class="stat-card"><div class="stat-val" id="statStuffed">—</div><div class="stat-lbl">Overate</div></div>
+        </div>
+        <div id="motivationBanner" class="motivation-banner hidden"></div>
+      </div>
+    </div>
+
+    <div id="mealSections"></div>
+    <button class="close-day-btn" onclick="closeDay()">✅ Close Out Today &amp; Reflect</button>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="page-history" class="main hidden">
+    <div class="date-bar"><h2>History</h2></div>
+    <div id="historyList"></div>
+  </div>
+
+  <!-- WEIGHT -->
+  <div id="page-weight" class="main hidden">
+    <div class="date-bar">
+      <div><h2>Weight Tracker</h2><div class="date-sub">Log whenever you want</div></div>
+    </div>
+    <div class="weight-section">
+      <div class="weight-header"><h3>Log Your Weight</h3></div>
+      <div class="weight-body">
+        <div class="weight-log-row">
+          <input type="number" id="weightInput" class="weight-input" placeholder="lbs" step="0.1" min="50" max="600" />
+          <button class="btn btn-blue" onclick="logWeight()">Log Weight</button>
+        </div>
+        <div id="weightEntries" class="weight-entries"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="page-settings" class="main hidden">
+    <div class="date-bar"><h2>Settings</h2></div>
+    <div class="settings-section">
+      <h3>Dropbox</h3>
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:6px;">
+        <label>Access token</label>
+        <div style="display:flex;gap:8px;width:100%">
+          <input type="password" id="settingsToken" class="settings-input" placeholder="Paste token to update" />
+          <button class="btn btn-blue btn-sm" onclick="updateToken()">Save</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <span>Sync now</span>
+        <button class="btn btn-blue btn-sm" onclick="syncToDropbox()">Sync</button>
+      </div>
+      <div class="settings-row">
+        <span id="dropboxStatus" style="font-size:13px;color:var(--gray)">—</span>
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>Data</h3>
+      <div class="settings-row">
+        <span>Export all data as CSV</span>
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()">Export CSV</button>
+      </div>
+      <div class="settings-row">
+        <span>Clear all local data</span>
+        <button class="btn btn-danger btn-sm" onclick="confirmClearData()">Clear Data</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /appMain -->
+
+<!-- CLOSE DAY MODAL -->
+<div id="closeDayModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>🌙 How did today go?</h3>
+    <p>A quick reflection — just for you. What worked, what didn't, what you'll try tomorrow.</p>
+    <textarea id="reflectionNote" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:14px;font-family:inherit;resize:none;min-height:90px;outline:none;color:var(--navy);" placeholder="I overate at dinner... skipped breakfast which made me hungrier... going to try eating slower tomorrow..."></textarea>
+    <div id="closeDaySummaryText" style="margin:12px 0;font-size:13px;color:var(--gray);line-height:1.6;"></div>
+    <div id="closeDayMotivation" style="padding:12px 14px;background:var(--blue-light);border-left:3px solid var(--blue);border-radius:0 6px 6px 0;font-size:14px;color:var(--blue-deeper);font-style:italic;line-height:1.55;margin-bottom:4px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="document.getElementById('closeDayModal').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-blue" onclick="saveReflection()">Save &amp; Close Day</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ── DROPBOX CONFIG ─────────────────────────────────────────────────────────
+const DB_FILE = "/Apps/MikesFoodJournal/food-journal-data.json";
+
+function getToken() { return localStorage.getItem("fj_dbx_token") || ""; }
+function setToken(t) { localStorage.setItem("fj_dbx_token", t); }
+
+// ── MEAL DEFS ──────────────────────────────────────────────────────────────
+const MEALS = [
+  { id:"breakfast", label:"Breakfast",       icon:"🍳" },
+  { id:"snack1",    label:"Morning Snack",   icon:"🍎" },
+  { id:"lunch",     label:"Lunch",           icon:"🥪" },
+  { id:"snack2",    label:"Afternoon Snack", icon:"🍪" },
+  { id:"dinner",    label:"Dinner",          icon:"🍽️" },
+  { id:"dessert",   label:"Dessert",         icon:"🍦" },
+];
+
+const MOTIVATIONS = [
+  "Small wins compound. Every honest log is a step forward.",
+  "You showed up today. That's the whole game.",
+  "Awareness is the first move. You made it.",
+  "Progress isn't always visible — but it's happening.",
+  "One day at a time. You tracked. That matters.",
+  "The gap between who you are and who you want to be closes one day at a time.",
+  "You can't change what you don't see. Now you see it.",
+  "Consistency beats perfection every single time.",
+  "Tomorrow is a fresh start. You've got the data to work with.",
+  "Logging today means smarter choices tomorrow. Keep going.",
+  "Every meal you logged is a data point. You're learning yourself.",
+  "Done is better than perfect. You logged. That's the win.",
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let viewDate = getTodayStr();
+let data = loadData();
+let fullnessState = {};
+
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function loadData() {
+  try { return JSON.parse(localStorage.getItem("fj_data")) || { days:{}, weight:[] }; }
+  catch { return { days:{}, weight:[] }; }
+}
+function saveData() { localStorage.setItem("fj_data", JSON.stringify(data)); checkWeightNag(); }
+function getDayData(d) {
+  if (!data.days[d]) data.days[d] = { meals:{}, reflection:"", closed:false };
+  MEALS.forEach(m => { if (!data.days[d].meals[m.id]) data.days[d].meals[m.id] = []; });
+  return data.days[d];
+}
+
+// ── SETUP ──────────────────────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", () => {
+  const token = getToken();
+  if (token) { showApp(); }
+  // else stay on setup screen
+});
+
+function connectDropbox() {
+  const t = document.getElementById("tokenInput").value.trim();
+  if (!t) { showToast("Paste your Dropbox token first.", "error"); return; }
+  setToken(t);
+  showApp();
+  showToast("Connected to Dropbox! Syncing...", "success");
+  setTimeout(() => syncToDropbox(), 800);
+}
+
+function skipSetup() { showApp(); }
+
+function showApp() {
+  document.getElementById("setupScreen").classList.add("hidden");
+  document.getElementById("appMain").classList.remove("hidden");
+  const token = getToken();
+  document.getElementById("dropboxStatus").textContent = token ? "Token saved ✓" : "No token — local only";
+  renderToday();
+  checkWeightNag();
+}
+
+function updateToken() {
+  const t = document.getElementById("settingsToken").value.trim();
+  if (!t) { showToast("Paste a token first.", "error"); return; }
+  setToken(t);
+  document.getElementById("dropboxStatus").textContent = "Token saved ✓";
+  document.getElementById("settingsToken").value = "";
+  showToast("Token updated! Syncing...", "success");
+  setTimeout(() => syncToDropbox(), 500);
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function showTab(tab) {
+  ["today","history","weight","settings"].forEach(t => {
+    document.getElementById("page-"+t).classList.toggle("hidden", t!==tab);
+    document.getElementById("tab-"+t).classList.toggle("active", t===tab);
+  });
+  if (tab==="history") renderHistory();
+  if (tab==="weight")  renderWeight();
+}
+
+// ── DATE NAV ───────────────────────────────────────────────────────────────
+function changeDay(d) {
+  const dt = new Date(viewDate+"T12:00:00"); dt.setDate(dt.getDate()+d);
+  viewDate = dt.toISOString().slice(0,10); renderToday();
+}
+function goToday() { viewDate = getTodayStr(); renderToday(); }
+function formatLabel(s) {
+  const today = getTodayStr();
+  const yest  = new Date(); yest.setDate(yest.getDate()-1);
+  if (s===today) return "Today";
+  if (s===yest.toISOString().slice(0,10)) return "Yesterday";
+  return new Date(s+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+}
+function formatSub(s) {
+  return new Date(s+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+}
+
+// ── RENDER TODAY ───────────────────────────────────────────────────────────
+function renderToday() {
+  const day = getDayData(viewDate);
+  document.getElementById("todayLabel").textContent     = formatLabel(viewDate);
+  document.getElementById("todayDate").textContent      = formatSub(viewDate);
+  document.getElementById("daySummaryDate").textContent = formatLabel(viewDate);
+
+  let total=0, full=0, more=0, stuffed=0;
+  MEALS.forEach(m => (day.meals[m.id]||[]).forEach(e => {
+    total++; if(e.fullness==="full") full++; else if(e.fullness==="more") more++; else if(e.fullness==="stuffed") stuffed++;
+  }));
+  document.getElementById("statMeals").textContent   = total;
+  document.getElementById("statFull").textContent    = total>0 ? full    : "—";
+  document.getElementById("statMore").textContent    = total>0 ? more    : "—";
+  document.getElementById("statStuffed").textContent = total>0 ? stuffed : "—";
+
+  const motBanner = document.getElementById("motivationBanner");
+  if (day.closed && day.reflection) { motBanner.classList.remove("hidden"); motBanner.textContent = day.reflection; }
+  else { motBanner.classList.add("hidden"); }
+
+  const container = document.getElementById("mealSections");
+  container.innerHTML = "";
+  MEALS.forEach(m => container.appendChild(buildMealSection(m, day)));
+}
+
+function buildMealSection(meal, day) {
+  const entries = day.meals[meal.id] || [];
+  const sec = document.createElement("div");
+  sec.className = "meal-section";
+  const countBadge = entries.length ? `<span class="meal-count">${entries.length}</span>` : "";
+  sec.innerHTML = `
+    <div class="meal-header">
+      <div class="meal-title">
+        <span class="meal-icon">${meal.icon}</span>
+        <span class="meal-label">${meal.label}</span>
+        ${countBadge}
+      </div>
+    </div>
+    <div class="meal-entries" id="ent-${meal.id}">
+      ${entries.length===0 ? `<div class="empty-meal">Nothing logged yet</div>` : entries.map((e,i)=>entryHTML(meal.id,i,e)).join("")}
+    </div>
+    <div class="log-area hidden" id="logArea-${meal.id}">
+      <textarea class="log-textarea" id="logTxt-${meal.id}"
+        placeholder="Just type what you ate — e.g. 'three eggs, hash browns, coffee with cream'" rows="2"></textarea>
+      <div class="log-controls">
+        <label>How did it end up?</label>
+        <div class="fullness-btns" id="fbBtns-${meal.id}">
+          <button class="fullness-btn" data-v="full"    onclick="selFull('${meal.id}','full')">✅ Full</button>
+          <button class="fullness-btn" data-v="more"    onclick="selFull('${meal.id}','more')">😬 Wanted more</button>
+          <button class="fullness-btn" data-v="stuffed" onclick="selFull('${meal.id}','stuffed')">🤦 Overate</button>
+        </div>
+      </div>
+      <div class="log-save-row">
+        <button class="btn btn-blue btn-sm" onclick="saveEntry('${meal.id}')">Save</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleLog('${meal.id}',false)">Cancel</button>
+      </div>
+    </div>
+    <button class="add-toggle-btn" id="addBtn-${meal.id}" onclick="toggleLog('${meal.id}',true)">
+      + Log ${meal.label}
+    </button>`;
+  return sec;
+}
+
+function entryHTML(mealId, idx, e) {
+  const timeStr = e.time ? `<span class="entry-time">${e.time}</span>` : "";
+  const badges  = { full:"fullness-full", more:"fullness-more", stuffed:"fullness-stuffed" };
+  const labels  = { full:"✅ Full", more:"😬 Wanted more", stuffed:"🤦 Overate" };
+  const badge   = e.fullness ? `<span class="fullness-badge ${badges[e.fullness]}">${labels[e.fullness]}</span>` : "";
+  return `<div class="entry-card">
+    <div style="flex:1">
+      <div class="entry-food">${esc(e.food)}</div>
+      <div class="entry-meta">${timeStr}${badge}</div>
+    </div>
+    <button class="icon-btn" onclick="deleteEntry('${mealId}',${idx})" title="Delete">✕</button>
+  </div>`;
+}
+
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ── ENTRY ACTIONS ──────────────────────────────────────────────────────────
+function toggleLog(mealId, show) {
+  document.getElementById("logArea-"+mealId).classList.toggle("hidden", !show);
+  document.getElementById("addBtn-"+mealId).classList.toggle("hidden", show);
+  if (show) document.getElementById("logTxt-"+mealId).focus();
+  fullnessState[mealId] = null;
+}
+function selFull(mealId, val) {
+  fullnessState[mealId] = val;
+  document.querySelectorAll(`#fbBtns-${mealId} .fullness-btn`).forEach(b => {
+    b.classList.remove("sel-full","sel-more","sel-stuffed");
+    if (b.dataset.v===val) b.classList.add("sel-"+val);
+  });
+}
+function saveEntry(mealId) {
+  const text = (document.getElementById("logTxt-"+mealId).value||"").trim();
+  if (!text) { showToast("Type what you ate first.","error"); return; }
+  const fullness = fullnessState[mealId];
+  if (!fullness) { showToast("Did you feel full, or did you want more?","error"); return; }
+  const day  = getDayData(viewDate);
+  const time = new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+  day.meals[mealId].push({ food:text, fullness, time });
+  saveData(); showToast("Logged! 👍","success"); renderToday();
+  syncToDropbox();
+}
+function deleteEntry(mealId, idx) {
+  getDayData(viewDate).meals[mealId].splice(idx,1);
+  saveData(); renderToday();
+}
+
+// ── CLOSE DAY ──────────────────────────────────────────────────────────────
+function closeDay() {
+  const day = getDayData(viewDate);
+  let total=0,full=0,more=0,stuffed=0;
+  MEALS.forEach(m => (day.meals[m.id]||[]).forEach(e => {
+    total++; if(e.fullness==="full") full++; else if(e.fullness==="more") more++; else if(e.fullness==="stuffed") stuffed++;
+  }));
+  if (!total) { showToast("Log at least one meal first.","error"); return; }
+  const parts=[];
+  if(full)    parts.push(`${full} where you felt full`);
+  if(more)    parts.push(`${more} where you wanted more`);
+  if(stuffed) parts.push(`${stuffed} where you overate`);
+  document.getElementById("closeDaySummaryText").textContent =
+    `You logged ${total} meal${total>1?"s":""} today: `+parts.join(", ")+".";
+  const mot = MOTIVATIONS[Math.floor(Math.random()*MOTIVATIONS.length)];
+  document.getElementById("closeDayMotivation").textContent = `"${mot}"`;
+  document.getElementById("reflectionNote").value = "";
+  document.getElementById("closeDayModal").classList.remove("hidden");
+}
+function saveReflection() {
+  const note = document.getElementById("reflectionNote").value.trim();
+  const mot  = document.getElementById("closeDayMotivation").textContent.replace(/^"|"$/g,"");
+  const day  = getDayData(viewDate);
+  day.closed = true; day.reflection = note || mot;
+  saveData();
+  document.getElementById("closeDayModal").classList.add("hidden");
+  renderToday(); syncToDropbox();
+  showToast("Day closed. Good work. 🙌","success");
+}
+
+// ── WEIGHT ─────────────────────────────────────────────────────────────────
+function logWeight() {
+  const val = parseFloat(document.getElementById("weightInput").value);
+  if (!val||val<50||val>600) { showToast("Enter a valid weight in lbs.","error"); return; }
+  data.weight.unshift({ date:getTodayStr(), weight:val, time:new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}) });
+  saveData(); document.getElementById("weightInput").value="";
+  renderWeight(); syncToDropbox(); showToast("Weight logged!","success");
+}
+function renderWeight() {
+  const c = document.getElementById("weightEntries");
+  if (!data.weight.length) { c.innerHTML=`<div style="color:#a0aec0;font-size:13px;font-style:italic;text-align:center;padding:16px;">No entries yet — hop on the scale whenever you're ready.</div>`; return; }
+  c.innerHTML = data.weight.slice(0,25).map((e,i) => {
+    let delta="";
+    if (i<data.weight.length-1) {
+      const diff = +(e.weight-data.weight[i+1].weight).toFixed(1);
+      const cls  = diff<0?"delta-down":diff>0?"delta-up":"delta-same";
+      delta = `<span class="${cls}">${diff>0?"+":""}${diff} lbs</span>`;
+    }
+    return `<div class="weight-entry">
+      <span style="font-weight:600">${e.weight} lbs</span>
+      <span style="color:var(--gray);font-size:12px">${formatLabel(e.date)} · ${e.time||""}</span>
+      ${delta}
+    </div>`;
+  }).join("");
+}
+function checkWeightNag() {
+  if (!data.weight.length) return;
+  const days = Math.floor((Date.now()-new Date(data.weight[0].date+"T12:00:00").getTime())/86400000);
+  if (days>=14) setTimeout(()=>showToast(`Hey — it's been ${days} days since your last weigh-in. Time to hop on the scale! 🏋️`,"blue"),2500);
+}
+
+// ── HISTORY ────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const c = document.getElementById("historyList");
+  const days = Object.keys(data.days).sort((a,b)=>b.localeCompare(a));
+  if (!days.length) { c.innerHTML=`<div style="text-align:center;color:#a0aec0;font-size:14px;padding:48px;">No history yet — start logging!</div>`; return; }
+  c.innerHTML = days.slice(0,60).map(d => {
+    const day=data.days[d]; let all=[];
+    MEALS.forEach(m=>(day.meals?.[m.id]||[]).forEach(e=>all.push({meal:m.label,...e})));
+    if (!all.length) return "";
+    return `<div class="history-card">
+      <div class="history-date-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">
+        <h3>${formatLabel(d)} <span style="color:var(--gray);font-size:11px;font-weight:400">${d}</span></h3>
+        <span style="color:var(--gray);font-size:12px">${all.length} entr${all.length===1?"y":"ies"} ${day.closed?"✅":""}</span>
+      </div>
+      <div class="history-entries" style="display:none">
+        ${all.map(e=>`<div style="padding:7px 0;border-bottom:1px solid #f0f4fa;font-size:13px">
+          <span style="color:var(--blue);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">${e.meal}</span><br>
+          ${esc(e.food)}
+          ${e.fullness==="full"?`<span class="fullness-badge fullness-full" style="margin-left:6px">✅ Full</span>`:
+            e.fullness==="more"?`<span class="fullness-badge fullness-more" style="margin-left:6px">😬 More</span>`:
+            e.fullness==="stuffed"?`<span class="fullness-badge fullness-stuffed" style="margin-left:6px">🤦 Overate</span>`:""}
+        </div>`).join("")}
+        ${day.reflection?`<div style="margin-top:10px;padding:10px 12px;background:var(--blue-light);border-radius:6px;font-size:13px;color:var(--blue-deeper);font-style:italic">"${esc(day.reflection)}"</div>`:""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ── DROPBOX SYNC ───────────────────────────────────────────────────────────
+async function syncToDropbox() {
+  const token = getToken();
+  if (!token) { showSyncBar(false,"No Dropbox token — data saved locally only"); return; }
+  try {
+    const content = JSON.stringify(data, null, 2);
+    const res = await fetch("https://content.dropboxapi.com/2/files/upload", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/octet-stream",
+        "Dropbox-API-Arg": JSON.stringify({
+          path: DB_FILE,
+          mode: "overwrite",
+          autorename: false,
+          mute: true
+        })
+      },
+      body: content
+    });
+    if (res.ok) {
+      showSyncBar(true, "Synced to Dropbox · " + new Date().toLocaleTimeString());
+    } else {
+      const err = await res.json().catch(()=>({}));
+      const msg = err?.error_summary || "Unknown error";
+      showSyncBar(false, "Sync failed: " + msg);
+    }
+  } catch(e) {
+    showSyncBar(false, "Sync error — saved locally only");
+  }
+}
+
+function showSyncBar(ok, msg) {
+  const bar = document.getElementById("syncBar");
+  bar.className = "sync-bar" + (ok ? "" : " sync-error");
+  document.getElementById("syncMsg").textContent = msg;
+  bar.classList.remove("hidden");
+  setTimeout(() => bar.classList.add("hidden"), 5000);
+}
+
+// ── EXPORT ─────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const rows=[["Date","Meal","What I Ate","Fullness","Time"]];
+  Object.keys(data.days).sort().forEach(d => {
+    MEALS.forEach(m=>(data.days[d].meals?.[m.id]||[]).forEach(e=>
+      rows.push([d,m.label,`"${e.food.replace(/"/g,'""')}"`,e.fullness||"",e.time||""])
+    ));
+  });
+  data.weight.forEach(w=>rows.push([w.date,"Weight",w.weight+" lbs","",w.time||""]));
+  const blob = new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a"); a.href=url; a.download="food-journal.csv"; a.click();
+  URL.revokeObjectURL(url);
+  showToast("CSV downloaded!","success");
+}
+
+function confirmClearData() {
+  if (confirm("Delete all locally stored journal data? This cannot be undone.")) {
+    localStorage.removeItem("fj_data");
+    data = { days:{}, weight:[] };
+    renderToday();
+    showToast("Local data cleared.","");
+  }
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className   = "toast show"+(type?" toast-"+type:"");
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove("show"),3500);
+}
+</script>
+</body>
+</html>
