@@ -247,30 +247,11 @@
   <div class="setup-card">
     <div class="logo">🥗</div>
     <h2>Food Journal</h2>
-    <p class="subtitle">Connect your Dropbox to keep your data backed up privately — or skip and use locally.</p>
-
-    <div class="setup-step">
-      <div class="step-num">1</div>
-      <div class="step-text">Go to <a href="https://www.dropbox.com/developers/apps" target="_blank">dropbox.com/developers/apps</a> and click <strong>Create app</strong>.</div>
-    </div>
-    <div class="setup-step">
-      <div class="step-num">2</div>
-      <div class="step-text">Choose <strong>Scoped access</strong> → <strong>App folder</strong>. Name it anything (e.g. <code>FoodJournal</code>). Click <strong>Create app</strong>.</div>
-    </div>
-    <div class="setup-step">
-      <div class="step-num">3</div>
-      <div class="step-text">On the app's Settings page, scroll to <strong>OAuth 2</strong> → under <em>Generated access token</em> click <strong>Generate</strong>. Copy that token.</div>
-    </div>
-    <div class="setup-step">
-      <div class="step-num">4</div>
-      <div class="step-text">Paste it below and hit Connect.</div>
-    </div>
-
-    <div class="token-input-row">
-      <input type="text" id="tokenInput" class="token-input" placeholder="Paste your Dropbox access token here" />
-      <button class="btn btn-blue" onclick="connectDropbox()">Connect</button>
-    </div>
-    <button class="setup-skip" onclick="skipSetup()">Skip for now — save locally only</button>
+    <p class="subtitle">Connect your Dropbox to keep your data backed up privately &mdash; or skip and use locally.</p>
+    <button class="btn btn-blue" style="width:100%;justify-content:center;padding:13px;font-size:15px;margin-bottom:4px;" onclick="startDropboxOAuth()">
+      Connect Dropbox
+    </button>
+    <button class="setup-skip" onclick="skipSetup()">Skip for now &mdash; save locally only</button>
   </div>
 </div>
 
@@ -413,10 +394,42 @@
 
 <script>
 // ── DROPBOX CONFIG ─────────────────────────────────────────────────────────
-const DB_FILE = "/Apps/MikesFoodJournal/food-journal-data.json";
+const DB_FILE = "/food-journal-data.json";
+const DBX_APP_KEY = "h7k0cz4ny7zgt14";
+const REDIRECT_URI = "https://mikecodingnotgood.github.io/mikes-food-journal/food-journal.html";
 
 function getToken() { return localStorage.getItem("fj_dbx_token") || ""; }
 function setToken(t) { localStorage.setItem("fj_dbx_token", t); }
+
+function startDropboxOAuth() {
+  const state = Math.random().toString(36).slice(2);
+  localStorage.setItem("fj_dbx_state", state);
+  const params = new URLSearchParams({
+    client_id: DBX_APP_KEY,
+    redirect_uri: REDIRECT_URI,
+    response_type: "token",
+    state: state,
+    token_access_type: "offline"
+  });
+  window.location.href = "https://www.dropbox.com/oauth2/authorize?" + params.toString();
+}
+
+function handleOAuthCallback() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return false;
+  const params = new URLSearchParams(hash);
+  const token  = params.get("access_token");
+  const state  = params.get("state");
+  const saved  = localStorage.getItem("fj_dbx_state");
+  if (token && state && state === saved) {
+    setToken(token);
+    localStorage.removeItem("fj_dbx_state");
+    // Clean URL
+    history.replaceState(null, "", REDIRECT_URI);
+    return true;
+  }
+  return false;
+}
 
 // ── MEAL DEFS ──────────────────────────────────────────────────────────────
 const MEALS = [
@@ -465,19 +478,17 @@ function getDayData(d) {
 
 // ── SETUP ──────────────────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
+  const fromOAuth = handleOAuthCallback();
   const token = getToken();
-  if (token) { showApp(); }
+  if (token) {
+    showApp();
+    if (fromOAuth) {
+      showToast("Dropbox connected! Syncing...", "success");
+      setTimeout(() => syncToDropbox(), 800);
+    }
+  }
   // else stay on setup screen
 });
-
-function connectDropbox() {
-  const t = document.getElementById("tokenInput").value.trim();
-  if (!t) { showToast("Paste your Dropbox token first.", "error"); return; }
-  setToken(t);
-  showApp();
-  showToast("Connected to Dropbox! Syncing...", "success");
-  setTimeout(() => syncToDropbox(), 800);
-}
 
 function skipSetup() { showApp(); }
 
