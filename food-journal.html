@@ -409,7 +409,7 @@ function startDropboxOAuth() {
     redirect_uri: REDIRECT_URI,
     response_type: "token",
     state: state,
-    token_access_type: "offline"
+    scope: "files.content.write files.content.read"
   });
   window.location.href = "https://www.dropbox.com/oauth2/authorize?" + params.toString();
 }
