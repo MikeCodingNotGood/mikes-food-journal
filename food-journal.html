@@ -538,10 +538,58 @@
 const DB_FILE="food-journal-data.json";
 const DBX_APP_KEY="h7k0cz4ny7zgt14";
 const REDIRECT_URI="https://mikecodingnotgood.github.io/mikes-food-journal/food-journal.html";
+const WORKER_URL="https://dropbox-auth-worker.mikesvault.workers.dev";
 const WATER_GOAL=6;
 const TRT_DAYS=[4,0];
+
+// Token storage — now stores refresh token; access token cached in memory only
+function getRefreshToken(){return localStorage.getItem("fj_dbx_refresh")||"";}
+function setRefreshToken(t){localStorage.setItem("fj_dbx_refresh",t);}
 function getToken(){return localStorage.getItem("fj_dbx_token")||"";}
 function setToken(t){localStorage.setItem("fj_dbx_token",t);}
+function clearTokens(){localStorage.removeItem("fj_dbx_token");localStorage.removeItem("fj_dbx_refresh");}
+
+// Get a valid access token — refresh silently if needed
+let _refreshPromise=null;
+async function getValidToken(){
+  const access=getToken();
+  // Try current access token first — if we have one just use it,
+  // Dropbox access tokens last 4 hours; we'll refresh on 401
+  if(access)return access;
+  return await refreshAccessToken();
+}
+async function refreshAccessToken(){
+  // Prevent concurrent refresh calls
+  if(_refreshPromise)return _refreshPromise;
+  const rt=getRefreshToken();
+  if(!rt)return null;
+  _refreshPromise=(async()=>{
+    try{
+      const res=await fetch(WORKER_URL+"/token",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"refresh",refresh_token:rt})
+      });
+      const d=await res.json();
+      if(d.access_token){
+        setToken(d.access_token);
+        // Schedule clearing the cached access token just before it expires (4hr - 5min)
+        setTimeout(()=>localStorage.removeItem("fj_dbx_token"),(4*60*60-300)*1000);
+        return d.access_token;
+      }
+      // Refresh token itself expired — force re-auth
+      clearTokens();
+      showToast("Dropbox session ended — reconnecting...","error");
+      setTimeout(()=>startDropboxOAuth(),1500);
+      return null;
+    }catch(e){
+      return null;
+    }finally{
+      _refreshPromise=null;
+    }
+  })();
+  return _refreshPromise;
+}
 const MEALS=[
   {id:"breakfast",label:"Breakfast",icon:"&#x1F373;"},
   {id:"snack1",label:"Morning Snack",icon:"&#x1F34E;"},
@@ -565,19 +613,48 @@ function getDayData(d){
 function startDropboxOAuth(){
   const state=Math.random().toString(36).slice(2);
   localStorage.setItem("fj_dbx_state",state);
-  const p=new URLSearchParams({client_id:DBX_APP_KEY,redirect_uri:REDIRECT_URI,response_type:"token",state,scope:"files.content.write files.content.read"});
+  const p=new URLSearchParams({
+    client_id:DBX_APP_KEY,
+    redirect_uri:REDIRECT_URI,
+    response_type:"code",
+    state,
+    token_access_type:"offline",  // <-- this is what gets us a refresh token
+    scope:"files.content.write files.content.read"
+  });
   window.location.href="https://www.dropbox.com/oauth2/authorize?"+p.toString();
 }
-function handleOAuthCallback(){
-  const hash=window.location.hash.slice(1);
-  if(!hash)return false;
-  const p=new URLSearchParams(hash),token=p.get("access_token"),state=p.get("state");
-  if(token&&state&&state===localStorage.getItem("fj_dbx_state")){setToken(token);localStorage.removeItem("fj_dbx_state");history.replaceState(null,"",REDIRECT_URI);return true;}
-  return false;
+async function handleOAuthCallback(){
+  const params=new URLSearchParams(window.location.search);
+  const code=params.get("code");
+  const state=params.get("state");
+  if(!code||!state||state!==localStorage.getItem("fj_dbx_state"))return false;
+  localStorage.removeItem("fj_dbx_state");
+  history.replaceState(null,"",REDIRECT_URI);
+  // Exchange code for tokens via worker
+  showSyncBar(true,"Connecting to Dropbox...");
+  try{
+    const res=await fetch(WORKER_URL+"/token",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"exchange",code,redirect_uri:REDIRECT_URI})
+    });
+    const d=await res.json();
+    if(d.access_token&&d.refresh_token){
+      setToken(d.access_token);
+      setRefreshToken(d.refresh_token);
+      setTimeout(()=>localStorage.removeItem("fj_dbx_token"),(4*60*60-300)*1000);
+      return true;
+    }
+    showSyncBar(false,"Dropbox auth failed: "+(d.error||"unknown"));
+    return false;
+  }catch(e){
+    showSyncBar(false,"Worker error: "+e.message);
+    return false;
+  }
 }
-window.addEventListener("DOMContentLoaded",()=>{
-  const fromOAuth=handleOAuthCallback();
-  if(getToken()){
+window.addEventListener("DOMContentLoaded",async()=>{
+  const fromOAuth=await handleOAuthCallback();
+  if(getRefreshToken()||getToken()){
     showApp();
     if(fromOAuth){showToast("Dropbox connected! Syncing...","success");setTimeout(()=>syncToDropbox(),800);}
     else{pullFromDropbox();}
@@ -587,24 +664,29 @@ function skipSetup(){showApp();}
 function showApp(){
   document.getElementById("setupScreen").classList.add("hidden");
   document.getElementById("appMain").classList.remove("hidden");
-  document.getElementById("dropboxStatus").textContent=getToken()?"Token saved \u2713":"No token \u2014 local only";
+  document.getElementById("dropboxStatus").textContent=getRefreshToken()?"Connected \u2713 (auto-refresh enabled)":"No token \u2014 local only";
   if(data.goalWeight)document.getElementById("goalWeightInput").value=data.goalWeight;
   renderToday();updateStreak();checkWeightNag();
 }
 async function pullFromDropbox(){
-  const token=getToken();
-  if(!token)return;
+  if(!getRefreshToken()&&!getToken())return;
   showSyncBar(true,"Checking Dropbox for latest data...");
   try{
-    const res=await fetch("https://content.dropboxapi.com/2/files/download",{
+    let token=await getValidToken();
+    if(!token){showSyncBar(false,"Could not get Dropbox token");return;}
+    let res=await fetch("https://content.dropboxapi.com/2/files/download",{
       method:"POST",
       headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE})}
     });
+    // Auto-refresh on 401 and retry once
     if(res.status===401){
-      showSyncBar(false,"Dropbox token expired \u2014 reconnect in Settings");
-      showToast("Dropbox token expired. Go to Settings \u2192 Dropbox to reconnect.","error");
-      document.getElementById("dropboxStatus").textContent="\u26A0\uFE0F Token expired \u2014 click Reconnect below";
-      return;
+      localStorage.removeItem("fj_dbx_token");
+      token=await refreshAccessToken();
+      if(!token){return;}
+      res=await fetch("https://content.dropboxapi.com/2/files/download",{
+        method:"POST",
+        headers:{"Authorization":"Bearer "+token,"Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE})}
+      });
     }
     if(res.status===409){showSyncBar(true,"No Dropbox data yet \u2014 starting fresh");return;}
     if(!res.ok){showSyncBar(false,"Could not load from Dropbox ("+res.status+")");return;}
@@ -667,14 +749,25 @@ async function pullFromDropbox(){
   }
 }
 async function pushToDropbox(){
-  const token=getToken();
-  if(!token)return;
+  if(!getRefreshToken()&&!getToken())return false;
   try{
-    const res=await fetch("https://content.dropboxapi.com/2/files/upload",{
+    let token=await getValidToken();
+    if(!token)return false;
+    let res=await fetch("https://content.dropboxapi.com/2/files/upload",{
       method:"POST",
       headers:{"Authorization":"Bearer "+token,"Content-Type":"application/octet-stream","Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE,mode:"overwrite",autorename:false,mute:true})},
       body:JSON.stringify(data,null,2)
     });
+    if(res.status===401){
+      localStorage.removeItem("fj_dbx_token");
+      token=await refreshAccessToken();
+      if(!token)return false;
+      res=await fetch("https://content.dropboxapi.com/2/files/upload",{
+        method:"POST",
+        headers:{"Authorization":"Bearer "+token,"Content-Type":"application/octet-stream","Dropbox-API-Arg":JSON.stringify({path:"/"+DB_FILE,mode:"overwrite",autorename:false,mute:true})},
+        body:JSON.stringify(data,null,2)
+      });
+    }
     return res.ok;
   }catch{return false;}
 }
