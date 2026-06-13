@@ -426,6 +426,13 @@
       <button class="btn btn-blue btn-sm" onclick="openAddItem()">+ Add</button>
     </div>
     <div id="watchlistContent"></div>
+    <!-- Manage custom categories -->
+    <div id="manageCatsSection" style="margin-top:18px;display:none">
+      <div class="section-card">
+        <div class="section-head"><h3>Manage Custom Categories</h3></div>
+        <div class="section-body" id="manageCatsList"></div>
+      </div>
+    </div>
   </div>
 
   <div id="page-settings" class="main hidden">
@@ -466,16 +473,14 @@
   <div class="modal">
     <h3>Add to My List</h3>
     <p>Pick a category, add a title, and optionally who told you about it.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      <button class="cat-btn" data-cat="Movie"      onclick="selectCat(this)">Movie</button>
-      <button class="cat-btn" data-cat="TV Show"    onclick="selectCat(this)">TV Show</button>
-      <button class="cat-btn" data-cat="Restaurant" onclick="selectCat(this)">Restaurant</button>
-      <button class="cat-btn" data-cat="Recipe"     onclick="selectCat(this)">Recipe</button>
-      <button class="cat-btn" data-cat="Music"      onclick="selectCat(this)">Music / Album</button>
-      <button class="cat-btn" data-cat="Book"       onclick="selectCat(this)">Book</button>
-      <button class="cat-btn" data-cat="Joke"       onclick="selectCat(this)">Joke</button>
-      <button class="cat-btn" data-cat="Work"       onclick="selectCat(this)">Work</button>
-      <button class="cat-btn" data-cat="Other"      onclick="selectCat(this)">Other</button>
+    <div style="margin-bottom:14px">
+      <select id="catDropdown" class="dark-input" style="width:100%;margin-bottom:0" onchange="handleCatSelect(this)">
+        <option value="">— Select a category —</option>
+      </select>
+    </div>
+    <!-- Custom category input — hidden unless "New Category..." is selected -->
+    <div id="newCatRow" style="display:none;margin-bottom:14px">
+      <input type="text" id="newCatInput" class="dark-input" placeholder="Enter new category name..." style="width:100%" />
     </div>
     <input type="text" id="itemTitle" class="dark-input" placeholder="Title, punchline, or first line..." style="width:100%;margin-bottom:10px" />
     <input type="text" id="itemRec"   class="dark-input" placeholder="Recommended by... (optional)" style="width:100%;margin-bottom:10px" />
@@ -1467,20 +1472,62 @@ function renderHealthChart(){
 }
 
 // WATCHLIST
-const CAT_ORDER=['Movie','TV Show','Restaurant','Recipe','Music','Book','Joke','Work','Other'];
+const CAT_BUILTIN=['Movie','TV Show','Restaurant','Recipe','Music / Album','Book','Joke','Work','Other'];
 let selectedCat=null;
+
+function getCustomCats(){return JSON.parse(localStorage.getItem('fj_custom_cats')||'[]');}
+function saveCustomCats(arr){localStorage.setItem('fj_custom_cats',JSON.stringify(arr));}
+function getAllCats(){return [...CAT_BUILTIN,...getCustomCats()];}
+
+function populateCatDropdown(currentVal){
+  const dd=document.getElementById('catDropdown');
+  const cats=getAllCats();
+  dd.innerHTML='<option value="">— Select a category —</option>'
+    +cats.map(c=>`<option value="${esc(c)}"${c===currentVal?'selected':''}>${esc(c)}</option>`).join('')
+    +'<option value="__new__">+ New Category...</option>';
+}
+
+function handleCatSelect(sel){
+  const val=sel.value;
+  const newCatRow=document.getElementById('newCatRow');
+  if(val==='__new__'){
+    newCatRow.style.display='block';
+    document.getElementById('newCatInput').value='';
+    setTimeout(()=>document.getElementById('newCatInput').focus(),50);
+    selectedCat=null;
+  } else {
+    newCatRow.style.display='none';
+    selectedCat=val||null;
+  }
+}
+
 function openAddItem(){
   selectedCat=null;
-  ['itemTitle','itemRec','itemNote'].forEach(id=>document.getElementById(id).value='');
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));
+  ['itemTitle','itemRec','itemNote','newCatInput'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('newCatRow').style.display='none';
+  populateCatDropdown(null);
   document.getElementById('addItemModal').classList.remove('hidden');
   setTimeout(()=>document.getElementById('itemTitle').focus(),100);
 }
 function closeAddItem(){document.getElementById('addItemModal').classList.add('hidden');}
-function selectCat(btn){document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');selectedCat=btn.dataset.cat;}
+
 function saveItem(){
   const title=document.getElementById('itemTitle').value.trim();
   if(!title){showToast('Add a title first.','error');return;}
+
+  // Handle new custom category
+  const dd=document.getElementById('catDropdown');
+  if(dd.value==='__new__'){
+    const newCat=document.getElementById('newCatInput').value.trim();
+    if(!newCat){showToast('Enter a name for the new category.','error');return;}
+    // Save custom cat if not already there
+    const customs=getCustomCats();
+    if(!customs.includes(newCat)){customs.push(newCat);saveCustomCats(customs);}
+    selectedCat=newCat;
+  } else {
+    selectedCat=dd.value||null;
+  }
+
   if(!selectedCat){showToast('Pick a category first.','error');return;}
   const rec=document.getElementById('itemRec').value.trim();
   const note=document.getElementById('itemNote').value.trim();
@@ -1489,6 +1536,7 @@ function saveItem(){
   saveData();closeAddItem();renderWatchlist();syncToDropbox();
   showToast(title+' saved to My List!','success');
 }
+
 function toggleItem(id){
   const item=data.watchlist.find(i=>i.id===id);
   if(item){item.done=!item.done;saveData();renderWatchlist();syncToDropbox();}
@@ -1497,35 +1545,74 @@ function deleteItem(id){
   data.watchlist=data.watchlist.filter(i=>i.id!==id);
   saveData();renderWatchlist();syncToDropbox();
 }
+function deleteCustomCat(cat){
+  if(!confirm('Delete the "'+cat+'" category? Items already saved under it will keep the category label but it will no longer appear in the dropdown.'))return;
+  const customs=getCustomCats().filter(c=>c!==cat);
+  saveCustomCats(customs);
+  renderWatchlist();
+  showToast('"'+cat+'" removed from categories.','success');
+}
+
 function renderWatchlist(){
   if(!data.watchlist)data.watchlist=[];
   const c=document.getElementById('watchlistContent');
-  if(!data.watchlist.length){c.innerHTML='<div class="wl-empty">Nothing saved yet.<br>Hit + Add to start your list.</div>';return;}
+
+  // Build ordered list — builtins first, then custom, then any orphaned cats
+  const allCats=getAllCats();
   const grouped={};
-  CAT_ORDER.forEach(cat=>{grouped[cat]=[];});
-  data.watchlist.forEach(item=>{if(!grouped[item.cat])grouped[item.cat]=[];grouped[item.cat].push(item);});
-  let html='';
-  CAT_ORDER.forEach(cat=>{
-    const items=grouped[cat];
-    if(!items.length)return;
-    const todo=items.filter(i=>!i.done).length;
-    html+='<div class="wl-group"><div class="wl-group-header">'+cat+' <span style="font-weight:400;opacity:0.6">('+todo+' remaining)</span></div>';
-    html+=items.map(item=>
-      '<div class="wl-item'+(item.done?' done':'')+'">'
-      +'<div class="wl-check" onclick="toggleItem('+item.id+')" title="'+(item.done?'Unmark':'Mark done')+'">&#10003;</div>'
-      +'<div style="flex:1;min-width:0">'
-      +'<div class="wl-title">'+esc(item.title)+'</div>'
-      +'<div class="wl-meta">'
-      +(item.rec?'<span class="wl-rec">From: '+esc(item.rec)+'</span>':'')
-      +(item.note?'<span class="wl-note">'+esc(item.note)+'</span>':'')
-      +'<span class="wl-date">Added '+formatLabel(item.added)+'</span>'
-      +'</div></div>'
-      +'<button class="wl-del" onclick="deleteItem('+item.id+')" title="Remove">&#215;</button>'
-      +'</div>'
-    ).join('');
-    html+='</div>';
+  allCats.forEach(cat=>{grouped[cat]=[];});
+  data.watchlist.forEach(item=>{
+    if(!grouped[item.cat])grouped[item.cat]=[];
+    grouped[item.cat].push(item);
   });
-  c.innerHTML=html;
+
+  // Collect all cats that have items (including orphaned)
+  const activeCats=allCats.filter(cat=>grouped[cat]&&grouped[cat].length);
+  // Also add any cats in data not in allCats (orphaned from deleted custom cats)
+  data.watchlist.forEach(item=>{if(!allCats.includes(item.cat)&&!activeCats.includes(item.cat))activeCats.push(item.cat);});
+
+  if(!data.watchlist.length){
+    c.innerHTML='<div class="wl-empty">Nothing saved yet.<br>Hit + Add to start your list.</div>';
+  } else {
+    let html='';
+    activeCats.forEach(cat=>{
+      const items=grouped[cat]||[];
+      if(!items.length)return;
+      const todo=items.filter(i=>!i.done).length;
+      html+='<div class="wl-group"><div class="wl-group-header">'+esc(cat)+' <span style="font-weight:400;opacity:0.6">('+todo+' remaining)</span></div>';
+      html+=items.map(item=>
+        '<div class="wl-item'+(item.done?' done':'')+'">'
+        +'<div class="wl-check" onclick="toggleItem('+item.id+')" title="'+(item.done?'Unmark':'Mark done')+'">&#10003;</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div class="wl-title">'+esc(item.title)+'</div>'
+        +'<div class="wl-meta">'
+        +(item.rec?'<span class="wl-rec">From: '+esc(item.rec)+'</span>':'')
+        +(item.note?'<span class="wl-note">'+esc(item.note)+'</span>':'')
+        +'<span class="wl-date">Added '+formatLabel(item.added)+'</span>'
+        +'</div></div>'
+        +'<button class="wl-del" onclick="deleteItem('+item.id+')" title="Remove">&#215;</button>'
+        +'</div>'
+      ).join('');
+      html+='</div>';
+    });
+    c.innerHTML=html;
+  }
+
+  // Manage custom categories section
+  const customs=getCustomCats();
+  const mgmtSection=document.getElementById('manageCatsSection');
+  const mgmtList=document.getElementById('manageCatsList');
+  if(customs.length){
+    mgmtSection.style.display='block';
+    mgmtList.innerHTML=customs.map(cat=>
+      `<div class="health-log-item">
+        <span style="font-size:13px">${esc(cat)}</span>
+        <button class="health-log-del" onclick="deleteCustomCat('${esc(cat)}')" title="Delete category">&#x2715;</button>
+      </div>`
+    ).join('');
+  } else {
+    mgmtSection.style.display='none';
+  }
 }
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 </script>
