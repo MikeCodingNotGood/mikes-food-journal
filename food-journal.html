@@ -306,7 +306,7 @@
 
     <!-- Stats row -->
     <div class="health-stat-row">
-      <div class="hero-stat"><div class="hv" style="color:#06b6d4" id="hStatSleep">&mdash;</div><div class="hl">Avg Sleep Quality</div></div>
+      <div class="hero-stat"><div class="hv" style="color:#06b6d4" id="hStatSleep">&mdash;</div><div class="hl">Avg Hours Slept (7 days)</div></div>
       <div class="hero-stat"><div class="hv" style="color:#f97316" id="hStatWorkouts">&mdash;</div><div class="hl">Workouts This Week</div></div>
       <div class="hero-stat"><div class="hv" style="color:#10b981" id="hStatStreak">&mdash;</div><div class="hl">Exercise Streak</div></div>
     </div>
@@ -357,27 +357,23 @@
       </div>
     </div>
 
-    <!-- 30-day visual calendar dots -->
+    <!-- Unified Sleep / Workout chart -->
     <div class="section-card">
-      <div class="section-head"><h3>Last 30 Days</h3><span style="font-size:11px;color:var(--text2)">&#x1F7E0; workout &nbsp; &#x1F7E2; great sleep &nbsp; &#x1F7E1; okay sleep &nbsp; &#x1F534; rough sleep</span></div>
-      <div class="section-body">
-        <div style="display:flex;gap:4px;flex-wrap:wrap" id="healthCalDots"></div>
-      </div>
-    </div>
-
-    <!-- Exercise chart -->
-    <div class="section-card">
-      <div class="section-head"><h3>Workout Frequency</h3></div>
-      <div class="section-body" style="padding:12px 12px 16px">
-        <div style="display:flex;gap:6px;margin-bottom:12px" id="exChartRangeBtns">
-          <button class="chart-range-btn active" data-r="7"  onclick="setExChartRange(7,this)">7 days</button>
-          <button class="chart-range-btn"        data-r="30" onclick="setExChartRange(30,this)">30 days</button>
-          <button class="chart-range-btn"        data-r="60" onclick="setExChartRange(60,this)">60 days</button>
-          <button class="chart-range-btn"        data-r="90" onclick="setExChartRange(90,this)">90 days</button>
-          <button class="chart-range-btn"        data-r="0"  onclick="setExChartRange(0,this)">All time</button>
+      <div class="section-head" style="flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:6px">
+          <button class="chart-range-btn active" id="hChartToggleSleep" onclick="setHealthChartView('sleep',this)">&#x1F4A4; Sleep</button>
+          <button class="chart-range-btn" id="hChartToggleEx" onclick="setHealthChartView('exercise',this)">&#x1F3CB;&#xFE0F; Workouts</button>
         </div>
-        <canvas id="exerciseChart" style="width:100%;max-height:220px"></canvas>
-        <div id="exerciseChartEmpty" style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;padding:40px 0;display:none">Log at least one workout to see your chart.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="hChartRangeBtns">
+          <button class="chart-range-btn active" data-r="30" onclick="setHealthChartRange(30,this)">30 days</button>
+          <button class="chart-range-btn"        data-r="60" onclick="setHealthChartRange(60,this)">60 days</button>
+          <button class="chart-range-btn"        data-r="90" onclick="setHealthChartRange(90,this)">90 days</button>
+          <button class="chart-range-btn"        data-r="0"  onclick="setHealthChartRange(0,this)">All time</button>
+        </div>
+      </div>
+      <div class="section-body" style="padding:12px 12px 16px">
+        <canvas id="healthChart" style="width:100%;max-height:240px"></canvas>
+        <div id="healthChartEmpty" style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;padding:40px 0;display:none">Nothing logged yet — start tracking to see your chart.</div>
       </div>
     </div>
   </div>
@@ -1129,7 +1125,7 @@ function showToast(msg,type){
 }
 
 // HEALTH TAB
-let selSleepQ=null,selActT=null,exChartRangeDays=7,exerciseChart=null;
+let selSleepQ=null,selActT=null,healthChartView='sleep',healthChartRangeDays=30,healthChart=null;
 
 function selSleepQuality(q){
   selSleepQ=q;
@@ -1148,16 +1144,14 @@ function saveSleep(){
   const wake=document.getElementById('sleepWake').value;
   if(!bedtime||!wake){showToast('Enter both bedtime and wake time.','error');return;}
   if(!selSleepQ){showToast('Pick a sleep quality first.','error');return;}
-  // Calculate duration
   const [bh,bm]=bedtime.split(':').map(Number);
   const [wh,wm]=wake.split(':').map(Number);
   let mins=(wh*60+wm)-(bh*60+bm);
-  if(mins<0)mins+=1440; // crossed midnight
-  const hrs=(mins/60).toFixed(1);
+  if(mins<0)mins+=1440;
+  const hrs=+(mins/60).toFixed(1);
   if(!data.sleep)data.sleep=[];
-  data.sleep.unshift({id:Date.now(),date:getTodayStr(),bedtime,wake,quality:selSleepQ,hours:+hrs});
+  data.sleep.unshift({id:Date.now(),date:getTodayStr(),bedtime,wake,quality:selSleepQ,hours:hrs});
   saveData();
-  // Reset
   document.getElementById('sleepBedtime').value='';
   document.getElementById('sleepWake').value='';
   selSleepQ=null;
@@ -1186,25 +1180,29 @@ function deleteExercise(id){
   data.exercise=data.exercise.filter(e=>e.id!==id);
   saveData();renderHealthPage();syncToDropbox();
 }
-function setExChartRange(days,btn){
-  exChartRangeDays=days;
-  document.querySelectorAll('#exChartRangeBtns .chart-range-btn').forEach(b=>b.classList.remove('active'));
+function setHealthChartView(view,btn){
+  healthChartView=view;
+  document.getElementById('hChartToggleSleep').classList.toggle('active',view==='sleep');
+  document.getElementById('hChartToggleEx').classList.toggle('active',view==='exercise');
+  renderHealthChart();
+}
+function setHealthChartRange(days,btn){
+  healthChartRangeDays=days;
+  document.querySelectorAll('#hChartRangeBtns .chart-range-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  renderExerciseChart();
+  renderHealthChart();
 }
 function renderHealthPage(){
   if(!data.sleep)data.sleep=[];
   if(!data.exercise)data.exercise=[];
   const today=getTodayStr();
+  const qLabel={great:'Great',okay:'Okay',rough:'Rough'};
 
   // --- Stats ---
-  // Avg sleep quality last 7 days
+  // Avg hours slept last 7 days
   const last7sl=data.sleep.filter(s=>{const d=new Date(s.date+'T12:00:00'),now=new Date();return(now-d)/86400000<=7;});
-  const qMap={great:3,okay:2,rough:1};
-  const qLabel={great:'Great',okay:'Okay',rough:'Rough'};
-  const qAvg=last7sl.length?last7sl.reduce((a,s)=>a+(qMap[s.quality]||0),0)/last7sl.length:0;
-  const qTxt=qAvg>=2.5?'Great':qAvg>=1.5?'Okay':qAvg>0?'Rough':'—';
-  document.getElementById('hStatSleep').textContent=qTxt;
+  const avgHrs=last7sl.length?(last7sl.reduce((a,s)=>a+(s.hours||0),0)/last7sl.length).toFixed(1):'—';
+  document.getElementById('hStatSleep').textContent=avgHrs==='—'?'—':avgHrs+'h';
 
   // Workouts this week (Mon–Sun)
   const now=new Date();
@@ -1223,128 +1221,149 @@ function renderHealthPage(){
   }
   document.getElementById('hStatStreak').textContent=streak>0?streak+'d':'—';
 
-  // --- Sleep log list (today's entries) ---
+  // --- Sleep log list (today) ---
   const todaySleep=data.sleep.filter(s=>s.date===today);
   const slList=document.getElementById('sleepLogList');
-  if(todaySleep.length){
-    slList.innerHTML=todaySleep.map(s=>`
-      <div class="health-log-item">
-        <div>
-          <span style="font-weight:700;color:${s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'}">${qLabel[s.quality]}</span>
-          <span style="color:var(--text2);font-size:12px;margin-left:6px">${s.bedtime} → ${s.wake} · ${s.hours}h</span>
-        </div>
-        <button class="health-log-del" onclick="deleteSleep(${s.id})">&#x2715;</button>
-      </div>`).join('');
-  } else {
-    slList.innerHTML='<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged yet tonight</div>';
-  }
+  slList.innerHTML=todaySleep.length?todaySleep.map(s=>`
+    <div class="health-log-item">
+      <div>
+        <span style="font-weight:700;color:${s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'}">${qLabel[s.quality]}</span>
+        <span style="color:var(--text2);font-size:12px;margin-left:6px">${s.bedtime} → ${s.wake} · ${s.hours}h</span>
+      </div>
+      <button class="health-log-del" onclick="deleteSleep(${s.id})">&#x2715;</button>
+    </div>`).join('')
+    :'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged yet tonight</div>';
 
-  // --- Exercise log list (today's entries) ---
+  // --- Exercise log list (today) ---
   const todayEx=data.exercise.filter(e=>e.date===today);
   const exList=document.getElementById('exerciseLogList');
-  if(todayEx.length){
-    exList.innerHTML=todayEx.map(e=>`
-      <div class="health-log-item">
-        <div>
-          <span style="font-weight:700;color:#f97316">${e.type}</span>
-          <span style="color:var(--text2);font-size:12px;margin-left:6px">${e.duration} min · ${e.time}</span>
-        </div>
-        <button class="health-log-del" onclick="deleteExercise(${e.id})">&#x2715;</button>
-      </div>`).join('');
-  } else {
-    exList.innerHTML='<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged today</div>';
-  }
+  exList.innerHTML=todayEx.length?todayEx.map(e=>`
+    <div class="health-log-item">
+      <div>
+        <span style="font-weight:700;color:#f97316">${e.type}</span>
+        <span style="color:var(--text2);font-size:12px;margin-left:6px">${e.duration} min · ${e.time}</span>
+      </div>
+      <button class="health-log-del" onclick="deleteExercise(${e.id})">&#x2715;</button>
+    </div>`).join('')
+    :'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged today</div>';
 
-  // --- 30-day calendar dots ---
-  const dotsEl=document.getElementById('healthCalDots');
-  let dotsHtml='';
-  for(let i=29;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
-    const ds=d.toISOString().slice(0,10);
-    const dayLabel=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    const hasEx=data.exercise.some(e=>e.date===ds);
-    const slEntry=data.sleep.find(s=>s.date===ds);
-    let cls='hday-dot';
-    let title=dayLabel;
-    if(hasEx){cls+=' ex-done';title+=' · workout';}
-    if(slEntry){cls+=` sl-${slEntry.quality}`;title+=` · sleep: ${slEntry.quality}`;}
-    dotsHtml+=`<div class="${cls}" title="${title}">${d.getDate()}</div>`;
-  }
-  dotsEl.innerHTML=dotsHtml;
-
-  // Chart
-  renderExerciseChart();
+  renderHealthChart();
 }
-function renderExerciseChart(){
+
+function renderHealthChart(){
+  if(!data.sleep)data.sleep=[];
   if(!data.exercise)data.exercise=[];
-  const canvas=document.getElementById('exerciseChart');
-  const emptyEl=document.getElementById('exerciseChartEmpty');
+  const canvas=document.getElementById('healthChart');
+  const emptyEl=document.getElementById('healthChartEmpty');
   if(!canvas)return;
-  if(!data.exercise.length){canvas.style.display='none';emptyEl.style.display='block';return;}
+  if(healthChart){healthChart.destroy();healthChart=null;}
 
-  // Build weekly buckets
-  let entries=[...data.exercise].sort((a,b)=>a.date.localeCompare(b.date));
-  if(exChartRangeDays>0){
-    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-exChartRangeDays);
-    entries=entries.filter(e=>new Date(e.date+'T12:00:00')>=cutoff);
-  }
-  if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
-  canvas.style.display='block';emptyEl.style.display='none';
+  const cutoff=healthChartRangeDays>0?new Date(Date.now()-healthChartRangeDays*86400000):null;
 
-  // Group by week (Mon) for ranges > 14 days, else by day
-  const groupByDay=exChartRangeDays<=14||exChartRangeDays===0&&entries.length<=14;
-  const buckets={};
-  entries.forEach(e=>{
-    let key;
-    if(groupByDay){
-      key=e.date;
-    } else {
-      const d=new Date(e.date+'T12:00:00');
-      const dow=d.getDay();
-      const mon=new Date(d);mon.setDate(d.getDate()-((dow+6)%7));
-      key=mon.toISOString().slice(0,10);
-    }
-    buckets[key]=(buckets[key]||0)+1;
-  });
-  const sortedKeys=Object.keys(buckets).sort();
-  const labels=sortedKeys.map(k=>{
-    const d=new Date(k+'T12:00:00');
-    return groupByDay?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):
-      'Wk '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  });
-  const counts=sortedKeys.map(k=>buckets[k]);
-
-  if(exerciseChart){exerciseChart.destroy();exerciseChart=null;}
-  exerciseChart=new Chart(canvas,{
-    type:'bar',
-    data:{
-      labels,
-      datasets:[{
-        label:'Workouts',
-        data:counts,
-        backgroundColor:'rgba(249,115,22,0.7)',
-        borderColor:'#f97316',
-        borderWidth:1.5,
-        borderRadius:4
-      }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:true,
-      plugins:{
-        legend:{display:false},
-        tooltip:{
-          backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',
-          borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
-          callbacks:{label:ctx=>ctx.parsed.y+' workout'+(ctx.parsed.y!==1?'s':'')}
-        }
+  if(healthChartView==='sleep'){
+    // One bar per sleep entry, colored by quality
+    let entries=[...data.sleep].sort((a,b)=>a.date.localeCompare(b.date));
+    if(cutoff)entries=entries.filter(s=>new Date(s.date+'T12:00:00')>=cutoff);
+    if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
+    canvas.style.display='block';emptyEl.style.display='none';
+    const labels=entries.map(s=>{
+      const d=new Date(s.date+'T12:00:00');
+      return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    });
+    const hours=entries.map(s=>s.hours);
+    const colors=entries.map(s=>s.quality==='great'?'rgba(16,185,129,0.8)':s.quality==='okay'?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.8)');
+    const borderColors=entries.map(s=>s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444');
+    healthChart=new Chart(canvas,{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[{
+          label:'Hours Slept',
+          data:hours,
+          backgroundColor:colors,
+          borderColor:borderColors,
+          borderWidth:1.5,
+          borderRadius:4
+        }]
       },
-      scales:{
-        x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:10},grid:{color:'rgba(255,255,255,0.04)'}},
-        y:{beginAtZero:true,ticks:{color:'#94a3b8',font:{size:10},stepSize:1,precision:0},grid:{color:'rgba(255,255,255,0.04)'}}
+      options:{
+        responsive:true,
+        maintainAspectRatio:true,
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',
+            borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+            callbacks:{
+              label:ctx=>{
+                const e=entries[ctx.dataIndex];
+                const q=e.quality.charAt(0).toUpperCase()+e.quality.slice(1);
+                return `${ctx.parsed.y}h · ${q} · ${e.bedtime}–${e.wake}`;
+              }
+            }
+          }
+        },
+        scales:{
+          x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},
+          y:{beginAtZero:true,max:12,ticks:{color:'#94a3b8',font:{size:10},callback:v=>v+'h'},grid:{color:'rgba(255,255,255,0.04)'}}
+        }
       }
-    }
-  });
+    });
+  } else {
+    // Workout frequency — bar chart by day or week
+    let entries=[...data.exercise].sort((a,b)=>a.date.localeCompare(b.date));
+    if(cutoff)entries=entries.filter(e=>new Date(e.date+'T12:00:00')>=cutoff);
+    if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
+    canvas.style.display='block';emptyEl.style.display='none';
+    const groupByDay=healthChartRangeDays<=30||(healthChartRangeDays===0&&entries.length<=30);
+    const buckets={};
+    entries.forEach(e=>{
+      let key;
+      if(groupByDay){key=e.date;}
+      else{
+        const d=new Date(e.date+'T12:00:00');
+        const mon=new Date(d);mon.setDate(d.getDate()-((d.getDay()+6)%7));
+        key=mon.toISOString().slice(0,10);
+      }
+      buckets[key]=(buckets[key]||0)+1;
+    });
+    const sortedKeys=Object.keys(buckets).sort();
+    const labels=sortedKeys.map(k=>{
+      const d=new Date(k+'T12:00:00');
+      return groupByDay?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):
+        'Wk '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    });
+    healthChart=new Chart(canvas,{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[{
+          label:'Workouts',
+          data:sortedKeys.map(k=>buckets[k]),
+          backgroundColor:'rgba(249,115,22,0.7)',
+          borderColor:'#f97316',
+          borderWidth:1.5,
+          borderRadius:4
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:true,
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',
+            borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+            callbacks:{label:ctx=>ctx.parsed.y+' workout'+(ctx.parsed.y!==1?'s':'')}
+          }
+        },
+        scales:{
+          x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:10},grid:{color:'rgba(255,255,255,0.04)'}},
+          y:{beginAtZero:true,ticks:{color:'#94a3b8',font:{size:10},stepSize:1,precision:0},grid:{color:'rgba(255,255,255,0.04)'}}
+        }
+      }
+    });
+  }
 }
 
 // WATCHLIST
