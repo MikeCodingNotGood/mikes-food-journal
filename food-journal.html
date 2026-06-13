@@ -606,7 +606,7 @@ const MEALS=[
 const MOTIVATIONS=["Small wins compound. Every honest log is a step forward.","You showed up today. That's the whole game.","Awareness is the first move. You made it.","Progress isn't always visible — but it's happening.","One day at a time. You tracked. That matters.","You can't change what you don't see. Now you see it.","Consistency beats perfection every single time.","Tomorrow is a fresh start. You've got the data.","Every meal logged is a data point. You're learning yourself.","Done is better than perfect. You logged. That's the win."];
 let viewDate=getTodayStr(),data=loadData(),panelMealId=null,panelFullness=null;
 function getTodayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];if(!d.journal)d.journal=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[]};}}
+function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],deletedWatchlistIds:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];if(!d.journal)d.journal=[];if(!d.deletedWatchlistIds)d.deletedWatchlistIds=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],deletedWatchlistIds:[]};}}
 function saveData(){localStorage.setItem("fj_data",JSON.stringify(data));checkWeightNag();}
 function getDayData(d){
   if(!data.days[d])data.days[d]={meals:{},reflection:"",closed:false,mood:"",water:0,trt:{}};
@@ -665,7 +665,7 @@ async function pullFromDropbox(){
     const remote=await res.json();
     if(!remote||typeof remote!=="object"){showSyncBar(false,"Invalid data from Dropbox");return;}
     const local=data;
-    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[],sleep:[],exercise:[],journal:[]};
+    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[],sleep:[],exercise:[],journal:[],deletedWatchlistIds:[]};
     // Merge days - for each day pick the version with more water OR more meal entries OR closed status
     const allDays=new Set([...Object.keys(local.days||{}),...Object.keys(remote.days||{})]);
     allDays.forEach(d=>{
@@ -693,12 +693,12 @@ async function pullFromDropbox(){
       if(!wSeen.has(key)){wSeen.add(key);merged.weight.push(w);}
     });
     merged.weight.sort((a,b)=>b.date.localeCompare(a.date));
-    // Merge watchlist — local wins on conflicts (preserves deletes and done state)
-    const deletedIds=JSON.parse(localStorage.getItem('fj_deleted_wl')||'[]');
+    // Merge watchlist — local wins on conflicts, respect deletes from both devices
+    const deletedIds=new Set([...(local.deletedWatchlistIds||[]),...(remote.deletedWatchlistIds||[])]);
+    merged.deletedWatchlistIds=[...deletedIds].slice(-500);
     const wlSeen=new Set();
-    // Local first so local state (done toggle, deletes) wins
     [...(local.watchlist||[]),...(remote.watchlist||[])].forEach(i=>{
-      if(deletedIds.includes(i.id))return; // skip deleted items
+      if(deletedIds.has(i.id))return;
       if(!wlSeen.has(i.id)){wlSeen.add(i.id);merged.watchlist.push(i);}
     });
     // Merge sleep — local first
@@ -1410,9 +1410,12 @@ function saveItem(){
 function toggleItem(id){const item=data.watchlist.find(i=>i.id===id);if(item){item.done=!item.done;saveData();renderWatchlist();syncToDropbox();}}
 function deleteItem(id){
   data.watchlist=data.watchlist.filter(i=>i.id!==id);
-  // Track deleted ID so it doesn't get resurrected from Dropbox on next sync
-  const deleted=JSON.parse(localStorage.getItem('fj_deleted_wl')||'[]');
-  if(!deleted.includes(id)){deleted.push(id);localStorage.setItem('fj_deleted_wl',JSON.stringify(deleted.slice(-200)));}
+  if(!data.deletedWatchlistIds)data.deletedWatchlistIds=[];
+  if(!data.deletedWatchlistIds.includes(id)){
+    data.deletedWatchlistIds.push(id);
+    // Keep list from growing forever — cap at 500
+    if(data.deletedWatchlistIds.length>500)data.deletedWatchlistIds=data.deletedWatchlistIds.slice(-500);
+  }
   saveData();renderWatchlist();syncToDropbox();
 }
 function deleteCat(cat){
