@@ -165,6 +165,10 @@
   .wl-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:4px;font-size:14px;margin-left:auto;flex-shrink:0;}
   .wl-del:hover{background:var(--red-dim);color:var(--red);}
   .wl-empty{text-align:center;padding:48px 20px;color:var(--text2);font-size:14px;font-style:italic;}
+  .qa-picker-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+  .qa-meal-btn{padding:10px 8px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--border2);cursor:pointer;background:var(--bg3);color:var(--text);transition:all 0.15s;font-family:var(--font);text-align:center;display:flex;align-items:center;gap:8px;}
+  .qa-meal-btn:hover{border-color:var(--blue);background:var(--blue-dim);color:var(--blue);}
+  .qa-food-preview{font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-style:italic;}
   .chart-range-btn{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border2);cursor:pointer;background:transparent;color:var(--text2);transition:all 0.15s;font-family:var(--font);}
   .chart-range-btn.active{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
   .wstat{background:var(--bg3);border-radius:10px;padding:10px 12px;text-align:center;}
@@ -413,6 +417,18 @@
 
 <div id="toast" class="toast"></div>
 
+<!-- Quick Add Meal Picker Modal -->
+<div id="quickAddPickerModal" class="modal-wrap hidden">
+  <div class="modal" style="max-width:400px">
+    <h3>&#x1F4CD; Log to which meal?</h3>
+    <div id="qaMealPickerFood" class="qa-food-preview"></div>
+    <div class="qa-picker-grid" id="qaMealPickerGrid"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeQuickAddPicker()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const DB_FILE="food-journal-data.json";
 const DBX_APP_KEY="h7k0cz4ny7zgt14";
@@ -648,7 +664,20 @@ function renderMealGrid(day){
     grid.appendChild(tile);
   });
 }
-function quickAdd(food){openPanel("snack1");setTimeout(()=>{document.getElementById("panelTextarea").value=food;},50);}
+let quickAddPendingFood=null;
+function quickAdd(food){
+  quickAddPendingFood=food;
+  document.getElementById("qaMealPickerFood").textContent="\u201C"+food+"\u201D";
+  const grid=document.getElementById("qaMealPickerGrid");
+  grid.innerHTML=MEALS.map(m=>`<button class="qa-meal-btn" onclick="quickAddToMeal('${m.id}')">${m.icon} ${m.label}</button>`).join("");
+  document.getElementById("quickAddPickerModal").classList.remove("hidden");
+}
+function quickAddToMeal(mealId){
+  closeQuickAddPicker();
+  openPanel(mealId);
+  setTimeout(()=>{document.getElementById("panelTextarea").value=quickAddPendingFood;quickAddPendingFood=null;},50);
+}
+function closeQuickAddPicker(){document.getElementById("quickAddPickerModal").classList.add("hidden");quickAddPendingFood=null;}
 function openPanel(mealId){
   panelMealId=mealId;panelFullness=null;
   const meal=MEALS.find(m=>m.id===mealId),day=getDayData(viewDate),entries=day.meals[mealId]||[];
