@@ -672,6 +672,8 @@ function showApp(){
   document.getElementById("dropboxStatus").textContent=getRefreshToken()?"Connected \u2713 (auto-refresh enabled)":"No token \u2014 local only";
   if(data.goalWeight)document.getElementById("goalWeightInput").value=data.goalWeight;
   renderToday();updateStreak();checkWeightNag();renderQuickAddChips();
+}
+async function pullFromDropbox(){
   if(!getRefreshToken()&&!getToken())return;
   showSyncBar(true,"Checking Dropbox for latest data...");
   try{
