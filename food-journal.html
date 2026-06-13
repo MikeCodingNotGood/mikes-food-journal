@@ -288,14 +288,7 @@
     </div>
     <div class="quick-add-row">
       <div class="qa-label">Quick add</div>
-      <div class="qa-chips">
-        <button class="qa-chip" onclick="quickAdd('Eggs and breakfast')">&#x1F373; Eggs &amp; breakfast</button>
-        <button class="qa-chip" onclick="quickAdd('Turkey sandwich')">&#x1F96A; Turkey sandwich</button>
-        <button class="qa-chip" onclick="quickAdd('Protein shake')">&#x1F964; Protein shake</button>
-        <button class="qa-chip" onclick="quickAdd('Deli meat and cheese')">&#x1F9C0; Deli meat &amp; cheese</button>
-        <button class="qa-chip" onclick="quickAdd('Sandwich')">&#x1F35E; Sandwich</button>
-        <button class="qa-chip" onclick="quickAdd('Protein bar')">&#x1F36B; Protein bar</button>
-      </div>
+      <div class="qa-chips" id="qaChips"></div>
     </div>
     <div class="meal-grid" id="mealGrid"></div>
     <button class="close-day-btn" onclick="closeDay()">&#x2705; Close Out Today &amp; Reflect</button>
@@ -453,6 +446,15 @@
       <div class="settings-row"><span>Sync now</span><button class="btn btn-blue btn-sm" onclick="syncToDropbox()">Sync</button></div>
       <div class="settings-row"><span>Token expired?</span><button class="btn btn-ghost btn-sm" onclick="startDropboxOAuth()">&#x1F504; Reconnect Dropbox</button></div>
       <div class="settings-row"><span id="dropboxStatus" style="font-size:13px;color:var(--text2)">&#8212;</span></div>
+    </div>
+    <div class="settings-section">
+      <h3>Quick Add Items</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Add or remove items that appear in the Quick Add bar on the Food tab.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="qaNewItem" class="dark-input" placeholder="e.g. Greek yogurt" style="flex:1" />
+        <button class="btn btn-blue btn-sm" onclick="addQuickAddItem()">+ Add</button>
+      </div>
+      <div id="qaSettingsList"></div>
     </div>
     <div class="settings-section">
       <h3>Manage Categories</h3>
@@ -669,9 +671,7 @@ function showApp(){
   document.getElementById("appMain").classList.remove("hidden");
   document.getElementById("dropboxStatus").textContent=getRefreshToken()?"Connected \u2713 (auto-refresh enabled)":"No token \u2014 local only";
   if(data.goalWeight)document.getElementById("goalWeightInput").value=data.goalWeight;
-  renderToday();updateStreak();checkWeightNag();
-}
-async function pullFromDropbox(){
+  renderToday();updateStreak();checkWeightNag();renderQuickAddChips();
   if(!getRefreshToken()&&!getToken())return;
   showSyncBar(true,"Checking Dropbox for latest data...");
   try{
@@ -797,7 +797,7 @@ function showTab(tab){
   if(tab==="weight")renderWeightPage();
   if(tab==="watchlist")renderWatchlist();
   if(tab==="health")renderHealthPage();
-  if(tab==="settings")renderCustomCats();
+  if(tab==="settings"){renderCustomCats();renderQaSettingsList();}
 }
 function changeDay(d){const dt=new Date(viewDate+"T12:00:00");dt.setDate(dt.getDate()+d);viewDate=dt.toISOString().slice(0,10);renderToday();}
 function goToday(){viewDate=getTodayStr();renderToday();}
@@ -1470,7 +1470,63 @@ function renderHealthChart(){
   }
 }
 
-// WATCHLIST
+// QUICK ADD
+const QA_DEFAULTS=['Eggs and breakfast','Turkey sandwich','Protein shake','Deli meat and cheese','Sandwich','Protein bar'];
+function getQuickAdds(){
+  const stored=localStorage.getItem('fj_quick_adds');
+  if(stored!==null)return JSON.parse(stored);
+  localStorage.setItem('fj_quick_adds',JSON.stringify([...QA_DEFAULTS]));
+  return [...QA_DEFAULTS];
+}
+function saveQuickAdds(arr){localStorage.setItem('fj_quick_adds',JSON.stringify(arr));}
+
+function renderQuickAddChips(){
+  const chips=document.getElementById('qaChips');
+  if(!chips)return;
+  const items=getQuickAdds();
+  if(!items.length){chips.innerHTML='<span style="font-size:12px;color:var(--text3);font-style:italic">No quick add items — add some in Settings.</span>';return;}
+  chips.innerHTML=items.map(item=>
+    `<button class="qa-chip" onclick="quickAdd('${item.replace(/'/g,"\\'")}'">${esc(item)}</button>`
+  ).join('');
+}
+
+function renderQaSettingsList(){
+  const list=document.getElementById('qaSettingsList');
+  if(!list)return;
+  const items=getQuickAdds();
+  if(!items.length){list.innerHTML='<div style="font-size:13px;color:var(--text2);font-style:italic">No quick add items yet.</div>';return;}
+  list.innerHTML=items.map((item,i)=>
+    '<div class="health-log-item">'
+    +'<span style="font-size:13px">'+esc(item)+'</span>'
+    +'<button class="health-log-del" onclick="removeQuickAddItem('+i+')" title="Remove">&#x2715;</button>'
+    +'</div>'
+  ).join('');
+}
+
+function addQuickAddItem(){
+  const input=document.getElementById('qaNewItem');
+  const val=input.value.trim();
+  if(!val){showToast('Enter a food name first.','error');return;}
+  const items=getQuickAdds();
+  if(items.includes(val)){showToast('That item is already in your quick add list.','error');return;}
+  items.push(val);
+  saveQuickAdds(items);
+  input.value='';
+  renderQaSettingsList();
+  renderQuickAddChips();
+  showToast('"'+val+'" added to Quick Add!','success');
+}
+
+function removeQuickAddItem(idx){
+  const items=getQuickAdds();
+  items.splice(idx,1);
+  saveQuickAdds(items);
+  renderQaSettingsList();
+  renderQuickAddChips();
+  showToast('Item removed.','success');
+}
+
+
 const CAT_BUILTIN=['Movie','TV Show','Restaurant','Recipe','Music / Album','Book','Joke','Work','Other'];
 let selectedCat=null;
 
