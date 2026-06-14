@@ -606,6 +606,7 @@ const MEALS=[
 const MOTIVATIONS=["Small wins compound. Every honest log is a step forward.","You showed up today. That's the whole game.","Awareness is the first move. You made it.","Progress isn't always visible — but it's happening.","One day at a time. You tracked. That matters.","You can't change what you don't see. Now you see it.","Consistency beats perfection every single time.","Tomorrow is a fresh start. You've got the data.","Every meal logged is a data point. You're learning yourself.","Done is better than perfect. You logged. That's the win."];
 let viewDate=getTodayStr(),data=loadData(),panelMealId=null,panelFullness=null;
 function getTodayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function getYesterdayStr(){const d=new Date();d.setDate(d.getDate()-1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],deletedWatchlistIds:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];if(!d.journal)d.journal=[];if(!d.deletedWatchlistIds)d.deletedWatchlistIds=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],deletedWatchlistIds:[]};}}
 function saveData(){localStorage.setItem("fj_data",JSON.stringify(data));checkWeightNag();}
 function getDayData(d){
@@ -1471,11 +1472,14 @@ function saveSleep(){
   if(!selSleepQ){showToast('Pick a sleep quality first.','error');return;}
   const [bh,bm]=bedtime.split(':').map(Number),[wh,wm]=wake.split(':').map(Number);
   let mins=(wh*60+wm)-(bh*60+bm);if(mins<0)mins+=1440;
+  // Bedtime 6 PM or later = last night's sleep, save to yesterday
+  const sleepDate=bh>=18?getYesterdayStr():getTodayStr();
   if(!data.sleep)data.sleep=[];
-  data.sleep.unshift({id:Date.now(),date:getTodayStr(),bedtime,wake,quality:selSleepQ,hours:+(mins/60).toFixed(1)});
+  data.sleep.unshift({id:Date.now(),date:sleepDate,bedtime,wake,quality:selSleepQ,hours:+(mins/60).toFixed(1)});
   saveData();document.getElementById('sleepBedtime').value='';document.getElementById('sleepWake').value='';
   selSleepQ=null;document.querySelectorAll('.sq-btn').forEach(b=>b.className='sq-btn');
-  renderHealthPage();syncToDropbox();showToast('Sleep logged! \uD83D\uDCA4','success');
+  renderHealthPage();syncToDropbox();
+  showToast('Sleep logged for '+(sleepDate===getTodayStr()?'today':'last night')+' \uD83D\uDCA4','success');
 }
 function deleteSleep(id){data.sleep=data.sleep.filter(s=>s.id!==id);saveData();renderHealthPage();syncToDropbox();}
 function saveExercise(){
