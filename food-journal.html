@@ -230,6 +230,7 @@
 
   <div class="nav-tabs">
     <div class="nav-tab active" id="tab-today"    onclick="showTab('today')">Food</div>
+    <div class="nav-tab"        id="tab-expenses" onclick="showTab('expenses')">Expenses</div>
     <div class="nav-tab"        id="tab-watchlist" onclick="showTab('watchlist')">Random</div>
     <div class="nav-tab"        id="tab-health"   onclick="showTab('health')">Health</div>
     <div class="nav-tab"        id="tab-weight"   onclick="showTab('weight')">Weight</div>
@@ -292,6 +293,81 @@
     </div>
     <div class="meal-grid" id="mealGrid"></div>
     <button class="close-day-btn" onclick="closeDay()">&#x2705; Close Out Today &amp; Reflect</button>
+  </div>
+
+  <div id="page-expenses" class="main hidden">
+    <div class="date-bar"><div><h2>Expenses</h2><div class="date-sub">Track your impulse spending</div></div></div>
+
+    <!-- Stats row -->
+    <div class="health-stat-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="hero-stat"><div class="hv" style="color:#10b981" id="expToday">$0</div><div class="hl">Spent Today</div></div>
+      <div class="hero-stat"><div class="hv" style="color:#f59e0b" id="expWeek">$0</div><div class="hl">This Week</div></div>
+      <div class="hero-stat"><div class="hv" style="color:#ef4444" id="expMonth">$0</div><div class="hl">This Month</div></div>
+      <div class="hero-stat"><div class="hv" style="color:#a78bfa" id="expCount">0</div><div class="hl">Purchases Today</div></div>
+    </div>
+
+    <!-- Log expense -->
+    <div class="section-card" style="margin-bottom:12px">
+      <div class="section-head"><h3>&#x1F4B8; Log Purchase</h3></div>
+      <div class="section-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Amount ($)</div>
+            <input type="number" id="expAmount" class="dark-input" placeholder="0.00" step="0.01" min="0" style="width:100%" />
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">What was it?</div>
+            <input type="text" id="expDesc" class="dark-input" placeholder="e.g. Energy drink at Kwik Trip" style="width:100%" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Payment type</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="expPaymentBtns">
+              <button class="chart-range-btn" data-p="Credit Card" onclick="selExpPayment(this)">Credit Card</button>
+              <button class="chart-range-btn" data-p="Debit Card" onclick="selExpPayment(this)">Debit Card</button>
+              <button class="chart-range-btn" data-p="Online" onclick="selExpPayment(this)">Online</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Category</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="expCatBtns">
+              <button class="chart-range-btn" data-c="Impulse" onclick="selExpCat(this)">Impulse</button>
+              <button class="chart-range-btn" data-c="Food & Drinks" onclick="selExpCat(this)">Food & Drinks</button>
+              <button class="chart-range-btn" data-c="Online Shopping" onclick="selExpCat(this)">Online Shopping</button>
+              <button class="chart-range-btn" data-c="Entertainment" onclick="selExpCat(this)">Entertainment</button>
+              <button class="chart-range-btn" data-c="Other" onclick="selExpCat(this)">Other</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-blue" onclick="saveExpense()" style="width:100%;justify-content:center">Log Purchase</button>
+      </div>
+    </div>
+
+    <!-- Today's purchases -->
+    <div id="expTodayList" style="margin-bottom:12px"></div>
+
+    <!-- Chart -->
+    <div class="section-card">
+      <div class="section-head" style="flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:6px">
+          <button class="chart-range-btn active" id="expChartToggleCC" onclick="setExpChartFilter('Credit Card',this)">Credit Card</button>
+          <button class="chart-range-btn" id="expChartToggleDC" onclick="setExpChartFilter('Debit Card',this)">Debit Card</button>
+          <button class="chart-range-btn" id="expChartToggleOL" onclick="setExpChartFilter('Online',this)">Online</button>
+          <button class="chart-range-btn" id="expChartToggleAll" onclick="setExpChartFilter('All',this)">All</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="expChartRangeBtns">
+          <button class="chart-range-btn active" data-r="7"  onclick="setExpChartRange(7,this)">7 days</button>
+          <button class="chart-range-btn"        data-r="30" onclick="setExpChartRange(30,this)">30 days</button>
+          <button class="chart-range-btn"        data-r="60" onclick="setExpChartRange(60,this)">60 days</button>
+          <button class="chart-range-btn"        data-r="0"  onclick="setExpChartRange(0,this)">All time</button>
+        </div>
+      </div>
+      <div class="section-body" style="padding:12px 12px 16px">
+        <canvas id="expenseChart" style="width:100%;max-height:280px"></canvas>
+        <div id="expenseChartEmpty" style="text-align:center;color:var(--text2);font-size:13px;font-style:italic;padding:40px 0;display:none">No purchases logged yet — start tracking to see your spending chart.</div>
+      </div>
+    </div>
   </div>
 
   <div id="page-health" class="main hidden">
@@ -622,7 +698,7 @@ const MOTIVATIONS=["Small wins compound. Every honest log is a step forward.","Y
 let viewDate=getTodayStr(),data=loadData(),panelMealId=null,panelFullness=null;
 function getTodayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function getYesterdayStr(){const d=new Date();d.setDate(d.getDate()-1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],deletedWatchlistIds:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];if(!d.journal)d.journal=[];if(!d.deletedWatchlistIds)d.deletedWatchlistIds=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],deletedWatchlistIds:[]};}}
+function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],expenses:[],deletedWatchlistIds:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];if(!d.journal)d.journal=[];if(!d.expenses)d.expenses=[];if(!d.deletedWatchlistIds)d.deletedWatchlistIds=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],expenses:[],deletedWatchlistIds:[]};}}
 function saveData(){localStorage.setItem("fj_data",JSON.stringify(data));checkWeightNag();}
 function getDayData(d){
   if(!data.days[d])data.days[d]={meals:{},reflection:"",closed:false,mood:"",water:0,trt:{}};
@@ -721,7 +797,7 @@ async function pullFromDropbox(){
     const remote=await res.json();
     if(!remote||typeof remote!=="object"){showSyncBar(false,"Invalid data from Dropbox");return;}
     const local=data;
-    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[],sleep:[],exercise:[],journal:[],deletedWatchlistIds:[]};
+    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[],sleep:[],exercise:[],journal:[],expenses:[],deletedWatchlistIds:[]};
     // Merge days - for each day pick the version with more water OR more meal entries OR closed status
     const allDays=new Set([...Object.keys(local.days||{}),...Object.keys(remote.days||{})]);
     allDays.forEach(d=>{
@@ -775,6 +851,12 @@ async function pullFromDropbox(){
       if(!jSeen.has(e.id)){jSeen.add(e.id);merged.journal.push(e);}
     });
     merged.journal.sort((a,b)=>b.id-a.id);
+    // Merge expenses
+    const exIdSeen=new Set();
+    [...(local.expenses||[]),...(remote.expenses||[])].forEach(e=>{
+      if(!exIdSeen.has(e.id)){exIdSeen.add(e.id);merged.expenses.push(e);}
+    });
+    merged.expenses.sort((a,b)=>b.id-a.id);
     data=merged;
     localStorage.setItem("fj_data",JSON.stringify(data));
     renderToday();updateStreak();checkWeightNag();
@@ -810,7 +892,7 @@ function saveGoalWeight(){
   showToast("Goal weight saved!","success");renderWeightProgress();
 }
 function showTab(tab){
-  ["today","history","weight","watchlist","settings","health","journal"].forEach(t=>{
+  ["today","history","weight","watchlist","settings","health","journal","expenses"].forEach(t=>{
     document.getElementById("page-"+t).classList.toggle("hidden",t!==tab);
     document.getElementById("tab-"+t).classList.toggle("active",t===tab);
   });
@@ -819,6 +901,7 @@ function showTab(tab){
   if(tab==="watchlist")renderWatchlist();
   if(tab==="health")renderHealthPage();
   if(tab==="journal"){renderJournalPage();renderWeeklySummary();}
+  if(tab==="expenses")renderExpensesPage();
   if(tab==="settings"){renderCustomCats();renderQaSettingsList();}
 }
 function changeDay(d){const dt=new Date(viewDate+"T12:00:00");dt.setDate(dt.getDate()+d);viewDate=dt.toISOString().slice(0,10);renderToday();}
@@ -1109,6 +1192,7 @@ function renderHistory(){
   (data.sleep||[]).forEach(s=>dayDates.add(s.date));
   (data.exercise||[]).forEach(e=>dayDates.add(e.date));
   (data.journal||[]).forEach(j=>dayDates.add(j.date));
+  (data.expenses||[]).forEach(e=>dayDates.add(e.date));
   const days=[...dayDates].sort((a,b)=>b.localeCompare(a));
   if(!days.length){c.innerHTML='<div style="text-align:center;color:var(--text2);font-size:14px;padding:48px;">No history yet.</div>';return;}
   const moodMap={great:"Great",good:"Good",meh:"Meh",tired:"Tired",stressed:"Stressed"};
@@ -1122,8 +1206,9 @@ function renderHistory(){
     const sleepEntries=(data.sleep||[]).filter(s=>s.date===d);
     const exerciseEntries=(data.exercise||[]).filter(e=>e.date===d);
     const journalEntries=(data.journal||[]).filter(j=>j.date===d);
+    const expenseEntries=(data.expenses||[]).filter(e=>e.date===d);
     const trtDone=Object.values(day.trt||{}).filter(Boolean).length;
-    const totalActivity=mealCount+(day.water||0)+(day.alcohol||0)+weightEntries.length+randomItems.length+trtDone+sleepEntries.length+exerciseEntries.length+journalEntries.length;
+    const totalActivity=mealCount+(day.water||0)+(day.alcohol||0)+weightEntries.length+randomItems.length+trtDone+sleepEntries.length+exerciseEntries.length+journalEntries.length+expenseEntries.length;
     if(!totalActivity)return"";
 
     let sections="";
@@ -1221,6 +1306,16 @@ function renderHistory(){
       });
     }
 
+    // Expenses
+    if(expenseEntries.length){
+      const expTotal=expenseEntries.reduce((a,e)=>a+e.amount,0);
+      sections+='<div style="padding:8px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="color:#10b981;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">Expenses</span>'+
+        '<span style="color:var(--text3);font-size:10px;margin-left:6px">$'+expTotal.toFixed(2)+' total</span><br>'+
+        expenseEntries.map(e=>`<div style="font-size:13px;color:var(--text);margin-top:3px">💳 ${esc(e.desc)} <span style="color:var(--text2)">· $${e.amount.toFixed(2)} · ${e.payment}</span></div>`).join('')+
+        '</div>';
+    }
+
     // Journal entries
     if(journalEntries.length){
       journalEntries.forEach(j=>{
@@ -1274,6 +1369,173 @@ function confirmClearData(){
 function showToast(msg,type){
   const t=document.getElementById("toast");t.textContent=msg;t.className="toast show"+(type?" toast-"+type:"");
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),3500);
+}
+
+// EXPENSES
+let selectedExpPayment=null,selectedExpCat=null,expChartFilter='Credit Card',expChartRangeDays=7,expenseChart=null;
+
+function selExpPayment(btn){
+  selectedExpPayment=btn.dataset.p;
+  document.querySelectorAll('#expPaymentBtns .chart-range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function selExpCat(btn){
+  selectedExpCat=btn.dataset.c;
+  document.querySelectorAll('#expCatBtns .chart-range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function saveExpense(){
+  const amount=parseFloat(document.getElementById('expAmount').value);
+  const desc=document.getElementById('expDesc').value.trim();
+  if(!amount||amount<=0){showToast('Enter a valid amount.','error');return;}
+  if(!desc){showToast('Describe the purchase.','error');return;}
+  if(!selectedExpPayment){showToast('Pick a payment type.','error');return;}
+  if(!selectedExpCat){showToast('Pick a category.','error');return;}
+  if(!data.expenses)data.expenses=[];
+  const now=new Date();
+  data.expenses.unshift({
+    id:Date.now(),
+    date:getTodayStr(),
+    time:now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}),
+    amount:+amount.toFixed(2),
+    desc,
+    payment:selectedExpPayment,
+    category:selectedExpCat
+  });
+  saveData();
+  document.getElementById('expAmount').value='';
+  document.getElementById('expDesc').value='';
+  selectedExpPayment=null;selectedExpCat=null;
+  document.querySelectorAll('#expPaymentBtns .chart-range-btn, #expCatBtns .chart-range-btn').forEach(b=>b.classList.remove('active'));
+  renderExpensesPage();syncToDropbox();
+  showToast('$'+amount.toFixed(2)+' logged \uD83D\uDCB8','success');
+}
+function deleteExpense(id){
+  data.expenses=data.expenses.filter(e=>e.id!==id);
+  saveData();renderExpensesPage();syncToDropbox();
+}
+function setExpChartFilter(filter,btn){
+  expChartFilter=filter;
+  ['expChartToggleCC','expChartToggleDC','expChartToggleOL','expChartToggleAll'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  btn.classList.add('active');
+  renderExpenseChart();
+}
+function setExpChartRange(days,btn){
+  expChartRangeDays=days;
+  document.querySelectorAll('#expChartRangeBtns .chart-range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderExpenseChart();
+}
+function renderExpensesPage(){
+  if(!data.expenses)data.expenses=[];
+  const today=getTodayStr();
+  const now=new Date();
+
+  // Stats
+  const todayExp=data.expenses.filter(e=>e.date===today);
+  const todayTotal=todayExp.reduce((a,e)=>a+e.amount,0);
+
+  const startOfWeek=new Date(now);startOfWeek.setDate(now.getDate()-((now.getDay()+6)%7));startOfWeek.setHours(0,0,0,0);
+  const weekTotal=data.expenses.filter(e=>new Date(e.date+'T12:00:00')>=startOfWeek).reduce((a,e)=>a+e.amount,0);
+
+  const startOfMonth=new Date(now.getFullYear(),now.getMonth(),1);
+  const monthTotal=data.expenses.filter(e=>new Date(e.date+'T12:00:00')>=startOfMonth).reduce((a,e)=>a+e.amount,0);
+
+  document.getElementById('expToday').textContent='$'+todayTotal.toFixed(2);
+  document.getElementById('expWeek').textContent='$'+weekTotal.toFixed(2);
+  document.getElementById('expMonth').textContent='$'+monthTotal.toFixed(2);
+  document.getElementById('expCount').textContent=todayExp.length;
+
+  // Today's list
+  const listEl=document.getElementById('expTodayList');
+  const catColors={'Impulse':'#ef4444','Food & Drinks':'#f97316','Online Shopping':'#a78bfa','Entertainment':'#3b82f6','Other':'#94a3b8'};
+  const payIcons={'Credit Card':'💳','Debit Card':'🏦','Online':'🌐'};
+  if(todayExp.length){
+    listEl.innerHTML='<div class="section-card"><div class="section-head"><h3>Today\'s Purchases</h3><span style="font-size:13px;color:var(--text2);font-weight:600">$'+todayTotal.toFixed(2)+' total</span></div><div class="section-body" style="padding:8px 16px">'
+      +todayExp.map(e=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:18px">${payIcons[e.payment]||'💰'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:600;color:var(--text)">${esc(e.desc)}</div>
+            <div style="display:flex;gap:6px;margin-top:3px;align-items:center">
+              <span style="font-size:11px;color:${catColors[e.category]||'#94a3b8'};font-weight:600">${e.category}</span>
+              <span style="color:var(--text3);font-size:11px">·</span>
+              <span style="font-size:11px;color:var(--text2)">${e.payment}</span>
+              <span style="color:var(--text3);font-size:11px">·</span>
+              <span style="font-size:11px;color:var(--text3)">${e.time}</span>
+            </div>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);white-space:nowrap">$${e.amount.toFixed(2)}</div>
+          <button class="health-log-del" onclick="deleteExpense(${e.id})">&#x2715;</button>
+        </div>`).join('')
+      +'</div></div>';
+  } else {
+    listEl.innerHTML='';
+  }
+
+  renderExpenseChart();
+}
+function renderExpenseChart(){
+  if(!data.expenses)data.expenses=[];
+  const canvas=document.getElementById('expenseChart');
+  const emptyEl=document.getElementById('expenseChartEmpty');
+  if(!canvas)return;
+  if(expenseChart){expenseChart.destroy();expenseChart=null;}
+
+  const cutoff=expChartRangeDays>0?new Date(Date.now()-expChartRangeDays*86400000):null;
+  let entries=[...data.expenses].sort((a,b)=>a.date.localeCompare(b.date));
+  if(cutoff)entries=entries.filter(e=>new Date(e.date+'T12:00:00')>=cutoff);
+
+  if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
+  canvas.style.display='block';emptyEl.style.display='none';
+
+  // Get unique dates in range
+  const dates=[...new Set(entries.map(e=>e.date))].sort();
+  const labels=dates.map(d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+
+  // Build datasets
+  const paymentTypes=expChartFilter==='All'?['Credit Card','Debit Card','Online']:[expChartFilter];
+  const colors={'Credit Card':'rgba(59,130,246,0.8)','Debit Card':'rgba(16,185,129,0.8)','Online':'rgba(167,139,250,0.8)'};
+  const borderColors={'Credit Card':'#3b82f6','Debit Card':'#10b981','Online':'#a78bfa'};
+
+  const datasets=paymentTypes.map(pt=>({
+    label:pt,
+    data:dates.map(d=>entries.filter(e=>e.date===d&&e.payment===pt).reduce((a,e)=>a+e.amount,0)),
+    backgroundColor:colors[pt],
+    borderColor:borderColors[pt],
+    borderWidth:2,
+    borderRadius:4,
+    tension:0.3,
+    fill:expChartFilter!=='All',
+    pointBackgroundColor:borderColors[pt],
+    pointRadius:4,
+    pointHoverRadius:6
+  }));
+
+  // Use line for single filter, bar for All
+  const chartType=expChartFilter==='All'?'bar':'line';
+
+  expenseChart=new Chart(canvas,{
+    type:chartType,
+    data:{labels,datasets},
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:expChartFilter==='All',labels:{color:'#94a3b8',font:{size:11}}},
+        tooltip:{
+          backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',
+          borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+          callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`}
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:10},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{beginAtZero:true,ticks:{color:'#94a3b8',font:{size:10},callback:v=>'$'+v},grid:{color:'rgba(255,255,255,0.04)'}}
+      }
+    }
+  });
 }
 
 // JOURNAL
