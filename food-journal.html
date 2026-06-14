@@ -552,27 +552,48 @@
       <div class="settings-row"><span id="dropboxStatus" style="font-size:13px;color:var(--text2)">&#8212;</span></div>
     </div>
     <div class="settings-section">
-      <h3>Quick Add Items</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Add or remove items in the Quick Add bar on the Food tab.</p>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <input type="text" id="qaNewItem" class="dark-input" placeholder="e.g. Greek yogurt" style="flex:1" />
-        <button class="btn btn-blue btn-sm" onclick="addQuickAddItem()">+ Add</button>
+      <h3>Manage Lists</h3>
+      <!-- Quick Add Items -->
+      <div style="border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden">
+        <div onclick="toggleAccordion('acc-quickadd')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:var(--bg3);">
+          <span style="font-size:13px;font-weight:600;color:var(--text)">&#x1F35D; Quick Add Items</span>
+          <span id="acc-quickadd-arrow" style="color:var(--text2);font-size:12px">&#x25BC;</span>
+        </div>
+        <div id="acc-quickadd" style="display:none;padding:14px">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Items in the Quick Add bar on the Food tab.</p>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <input type="text" id="qaNewItem" class="dark-input" placeholder="e.g. Greek yogurt" style="flex:1" />
+            <button class="btn btn-blue btn-sm" onclick="addQuickAddItem()">+ Add</button>
+          </div>
+          <div id="qaSettingsList"></div>
+        </div>
       </div>
-      <div id="qaSettingsList"></div>
-    </div>
-    <div class="settings-section">
-      <h3>Expense Categories</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Add or remove categories for expense tracking.</p>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <input type="text" id="expCatNewItem" class="dark-input" placeholder="e.g. Clothing" style="flex:1" />
-        <button class="btn btn-blue btn-sm" onclick="addExpCatItem()">+ Add</button>
+      <!-- Expense Categories -->
+      <div style="border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden">
+        <div onclick="toggleAccordion('acc-expcats')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:var(--bg3);">
+          <span style="font-size:13px;font-weight:600;color:var(--text)">&#x1F4B8; Expense Categories</span>
+          <span id="acc-expcats-arrow" style="color:var(--text2);font-size:12px">&#x25BC;</span>
+        </div>
+        <div id="acc-expcats" style="display:none;padding:14px">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Categories for expense tracking.</p>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <input type="text" id="expCatNewItem" class="dark-input" placeholder="e.g. Clothing" style="flex:1" />
+            <button class="btn btn-blue btn-sm" onclick="addExpCatItem()">+ Add</button>
+          </div>
+          <div id="expCatSettingsList"></div>
+        </div>
       </div>
-      <div id="expCatSettingsList"></div>
-    </div>
-    <div class="settings-section">
-      <h3>Manage Categories</h3>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Remove any category you don't want. Items already saved under it are never deleted.</p>
-      <div id="manageCatsList"></div>
+      <!-- Random Categories -->
+      <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <div onclick="toggleAccordion('acc-randcats')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:var(--bg3);">
+          <span style="font-size:13px;font-weight:600;color:var(--text)">&#x1F3B2; Random List Categories</span>
+          <span id="acc-randcats-arrow" style="color:var(--text2);font-size:12px">&#x25BC;</span>
+        </div>
+        <div id="acc-randcats" style="display:none;padding:14px">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Remove any category. Items saved under it are never deleted.</p>
+          <div id="manageCatsList"></div>
+        </div>
+      </div>
     </div>
     <div class="settings-section">
       <h3>Data</h3>
@@ -1812,6 +1833,21 @@ function renderWatchlist(){
     c.innerHTML=html;
   }
   renderCustomCats();
+}
+function toggleAccordion(id){
+  const panel=document.getElementById(id);
+  const arrow=document.getElementById(id+'-arrow');
+  const isOpen=panel.style.display==='block';
+  // Close all
+  ['acc-quickadd','acc-expcats','acc-randcats'].forEach(a=>{
+    document.getElementById(a).style.display='none';
+    document.getElementById(a+'-arrow').textContent='\u25BC';
+  });
+  // Open clicked if it was closed
+  if(!isOpen){
+    panel.style.display='block';
+    arrow.textContent='\u25B2';
+  }
 }
 function renderCustomCats(){
   const cats=getAllCats();const mgmtList=document.getElementById('manageCatsList');if(!mgmtList)return;
