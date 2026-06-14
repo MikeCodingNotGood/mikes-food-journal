@@ -175,6 +175,17 @@
   .wstat .wsv{font-size:18px;font-weight:700;line-height:1;}
   .wstat .wsl{font-size:10px;color:var(--text2);margin-top:4px;}
   .hidden{display:none!important;}
+  /* Animations */
+  @keyframes dropFill{0%{transform:scale(0.6);opacity:0.4;}60%{transform:scale(1.25);}100%{transform:scale(1);opacity:1;}}
+  @keyframes dropUnfill{0%{transform:scale(1.15);}100%{transform:scale(1);}}
+  @keyframes badgeBounce{0%,100%{transform:scale(1);}30%{transform:scale(1.3);}60%{transform:scale(0.92);}80%{transform:scale(1.08);}}
+  @keyframes tallyPop{0%{transform:scale(1);}40%{transform:scale(1.4);}70%{transform:scale(0.9);}100%{transform:scale(1);}}
+  @keyframes cardFadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .drop.filling{animation:dropFill 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+  .drop.unfilling{animation:dropUnfill 0.25s ease forwards;}
+  .badge-bounce{animation:badgeBounce 0.5s ease forwards;}
+  .tally-pop{animation:tallyPop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+  .chart-card-fadein{animation:cardFadeIn 0.4s ease forwards;}
   /* Health Tab */
   .health-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
   .health-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
@@ -500,7 +511,7 @@
     <!-- Stat cards -->
     <div id="weightStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px"></div>
     <!-- Chart -->
-    <div class="section-card" style="margin-bottom:12px">
+    <div class="section-card chart-card-fadein" style="margin-bottom:12px">
       <div class="section-head"><h3>Progress Chart</h3><span id="chartRange" style="font-size:12px;color:var(--text2)"></span></div>
       <div class="section-body" style="padding:12px 12px 20px">
         <div style="display:flex;gap:6px;margin-bottom:12px">
@@ -950,14 +961,29 @@ function renderToday(){
 function renderWater(day){
   const count=day.water||0;
   document.getElementById("waterCount").textContent=`${count} / ${WATER_GOAL}`;
-  document.getElementById("waterSub").textContent=count>=WATER_GOAL?"Goal reached!":` ${WATER_GOAL-count} more to go`;
+  document.getElementById("waterSub").textContent=count>=WATER_GOAL?"Goal reached! 💧":`${WATER_GOAL-count} more to go`;
   const wrap=document.getElementById("waterDrops");wrap.innerHTML="";
   for(let i=0;i<WATER_GOAL;i++){
     const d=document.createElement("div");d.className="drop"+(i<count?" filled":"");
     d.textContent="\uD83D\uDCA7";d.onclick=()=>toggleWater(i);wrap.appendChild(d);
   }
 }
-function toggleWater(idx){const day=getDayData(viewDate);day.water=idx<day.water?idx:idx+1;saveData();renderWater(day);syncToDropbox();}
+function toggleWater(idx){
+  const day=getDayData(viewDate);
+  const prev=day.water||0;
+  day.water=idx<prev?idx:idx+1;
+  saveData();
+  // Animate the affected drop
+  const drops=document.querySelectorAll('.drop');
+  if(drops[idx]){
+    const cls=day.water>prev?'filling':'unfilling';
+    drops[idx].classList.remove('filling','unfilling');
+    void drops[idx].offsetWidth;
+    drops[idx].classList.add(cls);
+    setTimeout(()=>drops[idx].classList.remove(cls),400);
+  }
+  renderWater(day);syncToDropbox();
+}
 function renderAlcohol(day){
   const count=day.alcohol||0;
   document.getElementById('alcoholTally').textContent=count;
@@ -967,7 +993,16 @@ function renderAlcohol(day){
 function changeAlcohol(delta){
   const day=getDayData(viewDate);
   day.alcohol=Math.max(0,(day.alcohol||0)+delta);
-  saveData();renderAlcohol(day);syncToDropbox();
+  saveData();renderAlcohol(day);
+  // Animate the tally number
+  const tally=document.getElementById('alcoholTally');
+  if(tally){
+    tally.classList.remove('tally-pop');
+    void tally.offsetWidth;
+    tally.classList.add('tally-pop');
+    setTimeout(()=>tally.classList.remove('tally-pop'),400);
+  }
+  syncToDropbox();
 }
 function renderTRT(day){
   const wrap=document.getElementById("trtDays");wrap.innerHTML="";
@@ -1085,8 +1120,16 @@ function updateStreak(){
     if(has)streak++;else if(i>0)break;
     d.setDate(d.getDate()-1);
   }
+  const badge=document.getElementById("streakBadge");
+  const prev=parseInt(document.getElementById("streakCount").textContent)||0;
   document.getElementById("streakCount").textContent=streak;
-  document.getElementById("streakBadge").style.display=streak>0?"flex":"none";
+  badge.style.display=streak>0?"flex":"none";
+  if(streak>prev&&streak>0){
+    badge.classList.remove('badge-bounce');
+    void badge.offsetWidth;
+    badge.classList.add('badge-bounce');
+    setTimeout(()=>badge.classList.remove('badge-bounce'),500);
+  }
 }
 function logWeight(){
   const val=parseFloat(document.getElementById("weightInput").value);
@@ -1923,6 +1966,9 @@ function renderHealthChart(){
     if(cutoff)entries=entries.filter(s=>new Date(s.date+'T12:00:00')>=cutoff);
     if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
     canvas.style.display='block';emptyEl.style.display='none';
+    // Fade in the chart card
+    const card=canvas.closest('.section-card');
+    if(card){card.classList.remove('chart-card-fadein');void card.offsetWidth;card.classList.add('chart-card-fadein');}
     healthChart=new Chart(canvas,{type:'bar',data:{labels:entries.map(s=>new Date(s.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Hours Slept',data:entries.map(s=>s.hours),backgroundColor:entries.map(s=>s.quality==='great'?'rgba(16,185,129,0.8)':s.quality==='okay'?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.8)'),borderColor:entries.map(s=>s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'),borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,callbacks:{label:ctx=>{const e=entries[ctx.dataIndex];return `${ctx.parsed.y}h \u00B7 ${e.quality} \u00B7 ${e.bedtime}\u2013${e.wake}`;}}}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{beginAtZero:true,max:12,ticks:{color:'#94a3b8',font:{size:10},callback:v=>v+'h'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
   } else if(healthChartView==='alcohol'){
     const days=data.days||{};
