@@ -326,7 +326,6 @@
             <div style="display:flex;gap:6px;flex-wrap:wrap" id="expPaymentBtns">
               <button class="chart-range-btn" data-p="Credit Card" onclick="selExpPayment(this)">Credit Card</button>
               <button class="chart-range-btn" data-p="Debit Card" onclick="selExpPayment(this)">Debit Card</button>
-              <button class="chart-range-btn" data-p="Online" onclick="selExpPayment(this)">Online</button>
             </div>
           </div>
           <div>
@@ -347,7 +346,6 @@
         <div style="display:flex;gap:6px">
           <button class="chart-range-btn active" id="expChartToggleCC" onclick="setExpChartFilter('Credit Card',this)">Credit Card</button>
           <button class="chart-range-btn" id="expChartToggleDC" onclick="setExpChartFilter('Debit Card',this)">Debit Card</button>
-          <button class="chart-range-btn" id="expChartToggleOL" onclick="setExpChartFilter('Online',this)">Online</button>
           <button class="chart-range-btn" id="expChartToggleAll" onclick="setExpChartFilter('All',this)">All</button>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap" id="expChartRangeBtns">
@@ -1396,7 +1394,7 @@ function showToast(msg,type){
 }
 
 // EXPENSE CATEGORIES
-const EXP_CAT_DEFAULTS=['Impulse','Food & Drinks','Online Shopping','Entertainment','Other'];
+const EXP_CAT_DEFAULTS=['Impulse','Food & Drinks','Online Purchase','Entertainment','Other'];
 function getExpCats(){const s=localStorage.getItem('fj_exp_cats');if(s!==null)return JSON.parse(s);localStorage.setItem('fj_exp_cats',JSON.stringify([...EXP_CAT_DEFAULTS]));return[...EXP_CAT_DEFAULTS];}
 function saveExpCats(arr){localStorage.setItem('fj_exp_cats',JSON.stringify(arr));}
 function addExpCatItem(){
@@ -1472,7 +1470,7 @@ function deleteExpense(id){
 }
 function setExpChartFilter(filter,btn){
   expChartFilter=filter;
-  ['expChartToggleCC','expChartToggleDC','expChartToggleOL','expChartToggleAll'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  ['expChartToggleCC','expChartToggleDC','expChartToggleAll'].forEach(id=>document.getElementById(id).classList.remove('active'));
   btn.classList.add('active');
   renderExpenseChart();
 }
@@ -1558,9 +1556,9 @@ function renderExpenseChart(){
   const labels=dates.map(d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}));
 
   // Build datasets
-  const paymentTypes=expChartFilter==='All'?['Credit Card','Debit Card','Online']:[expChartFilter];
-  const colors={'Credit Card':'rgba(59,130,246,0.8)','Debit Card':'rgba(16,185,129,0.8)','Online':'rgba(167,139,250,0.8)'};
-  const borderColors={'Credit Card':'#3b82f6','Debit Card':'#10b981','Online':'#a78bfa'};
+  const paymentTypes=expChartFilter==='All'?['Credit Card','Debit Card']:[expChartFilter];
+  const colors={'Credit Card':'rgba(59,130,246,0.8)','Debit Card':'rgba(16,185,129,0.8)'};
+  const borderColors={'Credit Card':'#3b82f6','Debit Card':'#10b981'};
 
   const datasets=paymentTypes.map(pt=>({
     label:pt,
