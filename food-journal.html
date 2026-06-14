@@ -957,14 +957,6 @@ function renderWater(day){
     d.textContent="\uD83D\uDCA7";d.onclick=()=>toggleWater(i);wrap.appendChild(d);
   }
 }
-function toggleWater(idx){
-  const day=getDayData(viewDate);
-  const current=day.water||0;
-  // If tapping the last filled drop, remove it. Otherwise fill up to idx+1.
-  if(idx===current-1){day.water=current-1;}
-  else{day.water=idx+1;}
-  saveData();renderWater(day);syncToDropbox();
-}
 function renderAlcohol(day){
   const count=day.alcohol||0;
   document.getElementById('alcoholTally').textContent=count;
@@ -974,7 +966,18 @@ function renderAlcohol(day){
 function changeAlcohol(delta){
   const day=getDayData(viewDate);
   day.alcohol=Math.max(0,(day.alcohol||0)+delta);
-  saveData();renderAlcohol(day);syncToDropbox();
+  saveData();renderAlcohol(day);
+  // Push directly without pulling first to avoid overwrite
+  pushToDropbox();
+}
+function toggleWater(idx){
+  const day=getDayData(viewDate);
+  const current=day.water||0;
+  if(idx===current-1){day.water=current-1;}
+  else{day.water=idx+1;}
+  saveData();renderWater(day);
+  // Push directly without pulling first to avoid overwrite
+  pushToDropbox();
 }
 function renderTRT(day){
   const wrap=document.getElementById("trtDays");wrap.innerHTML="";
