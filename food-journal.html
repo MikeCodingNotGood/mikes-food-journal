@@ -247,6 +247,21 @@
         <button onclick="changeDay(1)">&#8594;</button>
       </div>
     </div>
+    <!-- Weather card -->
+    <div id="weatherCard" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="weatherIcon" style="font-size:28px">⛅</div>
+        <div>
+          <div id="weatherTemp" style="font-size:20px;font-weight:700;color:var(--text)">--°F</div>
+          <div id="weatherDesc" style="font-size:12px;color:var(--text2);text-transform:capitalize">Loading weather...</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div id="weatherHiLo" style="font-size:12px;color:var(--text2)">H: -- L: --</div>
+        <div id="weatherLocation" style="font-size:11px;color:var(--text3);margin-top:2px"></div>
+        <div id="weatherHumidity" style="font-size:11px;color:var(--text3)"></div>
+      </div>
+    </div>
     <div class="hero-stats">
       <div class="hero-stat"><div class="hv hv-blue" id="statMeals">0</div><div class="hl">Meals logged</div></div>
       <div class="hero-stat"><div class="hv hv-green" id="statFull">&#8212;</div><div class="hl">Felt full</div></div>
@@ -652,6 +667,46 @@ function showApp(){
   document.getElementById("dropboxStatus").textContent=getRefreshToken()?"Connected \u2713 (auto-refresh enabled)":"No token \u2014 local only";
   if(data.goalWeight)document.getElementById("goalWeightInput").value=data.goalWeight;
   renderToday();updateStreak();checkWeightNag();renderQuickAddChips();
+  fetchWeather();
+}
+
+// WEATHER
+const OWM_KEY="d000a689461d614bbb0fa8c43ed913c9";
+const weatherIcons={
+  "01d":"☀️","01n":"🌙","02d":"⛅","02n":"⛅","03d":"☁️","03n":"☁️",
+  "04d":"☁️","04n":"☁️","09d":"🌧️","09n":"🌧️","10d":"🌦️","10n":"🌧️",
+  "11d":"⛈️","11n":"⛈️","13d":"❄️","13n":"❄️","50d":"🌫️","50n":"🌫️"
+};
+function fetchWeather(){
+  if(!navigator.geolocation){
+    document.getElementById("weatherDesc").textContent="Location not available";
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {latitude:lat,longitude:lon}=pos.coords;
+    try{
+      const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${OWM_KEY}`);
+      const d=await res.json();
+      if(d.cod!==200){document.getElementById("weatherDesc").textContent="Weather unavailable";return;}
+      const icon=weatherIcons[d.weather[0].icon]||"🌡️";
+      const temp=Math.round(d.main.temp);
+      const hi=Math.round(d.main.temp_max);
+      const lo=Math.round(d.main.temp_min);
+      const desc=d.weather[0].description;
+      const humidity=d.main.humidity;
+      const city=d.name;
+      document.getElementById("weatherIcon").textContent=icon;
+      document.getElementById("weatherTemp").textContent=temp+"°F";
+      document.getElementById("weatherDesc").textContent=desc;
+      document.getElementById("weatherHiLo").textContent="H: "+hi+"° L: "+lo+"°";
+      document.getElementById("weatherLocation").textContent=city;
+      document.getElementById("weatherHumidity").textContent="Humidity: "+humidity+"%";
+    }catch(e){
+      document.getElementById("weatherDesc").textContent="Weather unavailable";
+    }
+  },()=>{
+    document.getElementById("weatherDesc").textContent="Allow location for weather";
+  },{timeout:8000});
 }
 async function pullFromDropbox(){
   if(!getRefreshToken()&&!getToken())return;
