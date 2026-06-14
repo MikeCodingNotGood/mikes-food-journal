@@ -1527,14 +1527,14 @@ function saveSleep(){
   if(!selSleepQ){showToast('Pick a sleep quality first.','error');return;}
   const [bh,bm]=bedtime.split(':').map(Number),[wh,wm]=wake.split(':').map(Number);
   let mins=(wh*60+wm)-(bh*60+bm);if(mins<0)mins+=1440;
-  // Bedtime 6 PM or later = last night's sleep, save to yesterday
-  const sleepDate=bh>=18?getYesterdayStr():getTodayStr();
+  // Always save to yesterday — you're always logging last night's sleep
+  const sleepDate=getYesterdayStr();
   if(!data.sleep)data.sleep=[];
   data.sleep.unshift({id:Date.now(),date:sleepDate,bedtime,wake,quality:selSleepQ,hours:+(mins/60).toFixed(1)});
   saveData();document.getElementById('sleepBedtime').value='';document.getElementById('sleepWake').value='';
   selSleepQ=null;document.querySelectorAll('.sq-btn').forEach(b=>b.className='sq-btn');
   renderHealthPage();syncToDropbox();
-  showToast('Sleep logged for '+(sleepDate===getTodayStr()?'today':'last night')+' \uD83D\uDCA4','success');
+  showToast('Sleep logged for last night \uD83D\uDCA4','success');
 }
 function deleteSleep(id){data.sleep=data.sleep.filter(s=>s.id!==id);saveData();renderHealthPage();syncToDropbox();}
 function saveExercise(){
