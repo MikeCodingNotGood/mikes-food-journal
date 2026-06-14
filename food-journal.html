@@ -331,13 +331,7 @@
           </div>
           <div>
             <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Category</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap" id="expCatBtns">
-              <button class="chart-range-btn" data-c="Impulse" onclick="selExpCat(this)">Impulse</button>
-              <button class="chart-range-btn" data-c="Food & Drinks" onclick="selExpCat(this)">Food & Drinks</button>
-              <button class="chart-range-btn" data-c="Online Shopping" onclick="selExpCat(this)">Online Shopping</button>
-              <button class="chart-range-btn" data-c="Entertainment" onclick="selExpCat(this)">Entertainment</button>
-              <button class="chart-range-btn" data-c="Other" onclick="selExpCat(this)">Other</button>
-            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="expCatBtns"></div>
           </div>
         </div>
         <button class="btn btn-blue" onclick="saveExpense()" style="width:100%;justify-content:center">Log Purchase</button>
@@ -565,6 +559,15 @@
         <button class="btn btn-blue btn-sm" onclick="addQuickAddItem()">+ Add</button>
       </div>
       <div id="qaSettingsList"></div>
+    </div>
+    <div class="settings-section">
+      <h3>Expense Categories</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Add or remove categories for expense tracking.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="expCatNewItem" class="dark-input" placeholder="e.g. Clothing" style="flex:1" />
+        <button class="btn btn-blue btn-sm" onclick="addExpCatItem()">+ Add</button>
+      </div>
+      <div id="expCatSettingsList"></div>
     </div>
     <div class="settings-section">
       <h3>Manage Categories</h3>
@@ -902,7 +905,7 @@ function showTab(tab){
   if(tab==="health")renderHealthPage();
   if(tab==="journal"){renderJournalPage();renderWeeklySummary();}
   if(tab==="expenses")renderExpensesPage();
-  if(tab==="settings"){renderCustomCats();renderQaSettingsList();}
+  if(tab==="settings"){renderCustomCats();renderQaSettingsList();renderExpCatSettingsList();}
 }
 function changeDay(d){const dt=new Date(viewDate+"T12:00:00");dt.setDate(dt.getDate()+d);viewDate=dt.toISOString().slice(0,10);renderToday();}
 function goToday(){viewDate=getTodayStr();renderToday();}
@@ -1371,6 +1374,38 @@ function showToast(msg,type){
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),3500);
 }
 
+// EXPENSE CATEGORIES
+const EXP_CAT_DEFAULTS=['Impulse','Food & Drinks','Online Shopping','Entertainment','Other'];
+function getExpCats(){const s=localStorage.getItem('fj_exp_cats');if(s!==null)return JSON.parse(s);localStorage.setItem('fj_exp_cats',JSON.stringify([...EXP_CAT_DEFAULTS]));return[...EXP_CAT_DEFAULTS];}
+function saveExpCats(arr){localStorage.setItem('fj_exp_cats',JSON.stringify(arr));}
+function addExpCatItem(){
+  const input=document.getElementById('expCatNewItem');const val=input.value.trim();
+  if(!val){showToast('Enter a category name.','error');return;}
+  const cats=getExpCats();
+  if(cats.includes(val)){showToast('Already exists.','error');return;}
+  cats.push(val);saveExpCats(cats);input.value='';
+  renderExpCatSettingsList();
+  // Refresh expense page buttons if open
+  if(!document.getElementById('page-expenses').classList.contains('hidden'))renderExpensesPage();
+  showToast('"'+val+'" added!','success');
+}
+function removeExpCatItem(cat){
+  const cats=getExpCats().filter(c=>c!==cat);saveExpCats(cats);
+  renderExpCatSettingsList();
+  showToast('"'+cat+'" removed.','success');
+}
+function renderExpCatSettingsList(){
+  const list=document.getElementById('expCatSettingsList');if(!list)return;
+  const cats=getExpCats();
+  if(cats.length){
+    list.innerHTML='<div class="settings-tag-wrap">'+cats.map(cat=>
+      '<span class="settings-tag">'+esc(cat)+'<button class="settings-tag-x" onclick="removeExpCatItem(\''+cat.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" title="Remove">&#x2715;</button></span>'
+    ).join('')+'</div>';
+  } else {
+    list.innerHTML='<div style="font-size:13px;color:var(--text2);font-style:italic">No categories. Add one above.</div>';
+  }
+}
+
 // EXPENSES
 let selectedExpPayment=null,selectedExpCat=null,expChartFilter='Credit Card',expChartRangeDays=7,expenseChart=null;
 
@@ -1430,6 +1465,14 @@ function renderExpensesPage(){
   if(!data.expenses)data.expenses=[];
   const today=getTodayStr();
   const now=new Date();
+
+  // Populate category buttons dynamically
+  const expCatBtns=document.getElementById('expCatBtns');
+  if(expCatBtns){
+    expCatBtns.innerHTML=getExpCats().map(c=>
+      `<button class="chart-range-btn${selectedExpCat===c?' active':''}" data-c="${esc(c)}" onclick="selExpCat(this)">${esc(c)}</button>`
+    ).join('');
+  }
 
   // Stats
   const todayExp=data.expenses.filter(e=>e.date===today);
