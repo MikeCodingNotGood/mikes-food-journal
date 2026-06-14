@@ -679,7 +679,7 @@ async function pullFromDropbox(){
       merged.days[d]={
         ...winner,
         water:Math.max(ld.water||0,rd.water||0),
-        alcohol:(ld.alcohol!==undefined?ld.alcohol:rd.alcohol||0),
+        alcohol:Math.max(ld.alcohol||0,rd.alcohol||0),
         mood:ld.mood||rd.mood,
         closed:rd.closed||ld.closed,
         reflection:ld.reflection||rd.reflection,
