@@ -1476,7 +1476,7 @@ function saveExpense(){
 }
 function deleteExpense(id){
   data.expenses=data.expenses.filter(e=>e.id!==id);
-  saveData();renderExpensesPage();syncToDropbox();
+  saveData();renderExpensesPage();pushToDropbox();
 }
 function setExpChartFilter(filter,btn){
   expChartFilter=filter;
@@ -1622,7 +1622,7 @@ function saveJournalEntry(){
 }
 function deleteJournalEntry(id){
   data.journal=data.journal.filter(j=>j.id!==id);
-  saveData();renderJournalPage();syncToDropbox();
+  saveData();renderJournalPage();pushToDropbox();
 }
 function renderJournalPage(){
   if(!data.journal)data.journal=[];
@@ -1797,7 +1797,7 @@ function saveItem(){
   saveData();closeAddItem();renderWatchlist();syncToDropbox();
   showToast(title+' saved to My List!','success');
 }
-function toggleItem(id){const item=data.watchlist.find(i=>i.id===id);if(item){item.done=!item.done;saveData();renderWatchlist();syncToDropbox();}}
+function toggleItem(id){const item=data.watchlist.find(i=>i.id===id);if(item){item.done=!item.done;saveData();renderWatchlist();pushToDropbox();}}
 function deleteItem(id){
   data.watchlist=data.watchlist.filter(i=>i.id!==id);
   if(!data.deletedWatchlistIds)data.deletedWatchlistIds=[];
@@ -1806,7 +1806,7 @@ function deleteItem(id){
     // Keep list from growing forever — cap at 500
     if(data.deletedWatchlistIds.length>500)data.deletedWatchlistIds=data.deletedWatchlistIds.slice(-500);
   }
-  saveData();renderWatchlist();syncToDropbox();
+  saveData();renderWatchlist();pushToDropbox();
 }
 function deleteCat(cat){
   if(!confirm('Remove "'+cat+'" from the list? Items saved under it are kept.'))return;
@@ -1885,7 +1885,7 @@ function saveSleep(){
   renderHealthPage();syncToDropbox();
   showToast('Sleep logged for last night \uD83D\uDCA4','success');
 }
-function deleteSleep(id){data.sleep=data.sleep.filter(s=>s.id!==id);saveData();renderHealthPage();syncToDropbox();}
+function deleteSleep(id){data.sleep=data.sleep.filter(s=>s.id!==id);saveData();renderHealthPage();pushToDropbox();}
 function saveExercise(){
   const dur=parseInt(document.getElementById('exDuration').value);
   if(!selActT){showToast('Pick an activity type first.','error');return;}
@@ -1896,7 +1896,7 @@ function saveExercise(){
   document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
   renderHealthPage();syncToDropbox();showToast('Workout logged! \uD83D\uDCAA','success');
 }
-function deleteExercise(id){data.exercise=data.exercise.filter(e=>e.id!==id);saveData();renderHealthPage();syncToDropbox();}
+function deleteExercise(id){data.exercise=data.exercise.filter(e=>e.id!==id);saveData();renderHealthPage();pushToDropbox();}
 function setHealthChartView(view,btn){
   healthChartView=view;
   document.getElementById('hChartToggleSleep').classList.toggle('active',view==='sleep');
