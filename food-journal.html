@@ -1240,7 +1240,7 @@ function renderHistory(){
     const journalEntries=(data.journal||[]).filter(j=>j.date===d);
     const expenseEntries=(data.expenses||[]).filter(e=>e.date===d);
     const trtDone=Object.values(day.trt||{}).filter(Boolean).length;
-    const totalActivity=mealCount+(day.water||0)+(day.alcohol||0)+weightEntries.length+randomItems.length+trtDone+sleepEntries.length+exerciseEntries.length+journalEntries.length+expenseEntries.length;
+    const totalActivity=mealCount+(day.water>0?1:0)+(day.alcohol>0?1:0)+weightEntries.length+randomItems.length+(trtDone>0?1:0)+sleepEntries.length+exerciseEntries.length+journalEntries.length+expenseEntries.length+(day.mood?1:0);
     if(!totalActivity)return"";
 
     let sections="";
