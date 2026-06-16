@@ -379,6 +379,10 @@
     <div class="health-grid">
       <div class="health-card">
         <div class="health-card-title hc-teal">&#x1F4A4; Sleep Log</div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:4px">Which night?</div>
+          <input type="date" id="sleepDate" class="dark-input" style="width:100%;padding:6px 8px;font-size:13px" />
+        </div>
         <div class="time-inputs">
           <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">Bedtime</div><input type="time" id="sleepBedtime" class="dark-input" style="width:110px;padding:6px 8px;font-size:13px" /></div>
           <span style="margin-top:16px">&#8594;</span>
@@ -1887,14 +1891,15 @@ function saveSleep(){
   if(!selSleepQ){showToast('Pick a sleep quality first.','error');return;}
   const [bh,bm]=bedtime.split(':').map(Number),[wh,wm]=wake.split(':').map(Number);
   let mins=(wh*60+wm)-(bh*60+bm);if(mins<0)mins+=1440;
-  // Always save to yesterday — you're always logging last night's sleep
-  const sleepDate=getYesterdayStr();
+  // Use selected date, default to yesterday
+  const sleepDate=document.getElementById('sleepDate').value||getYesterdayStr();
   if(!data.sleep)data.sleep=[];
   data.sleep.unshift({id:Date.now(),date:sleepDate,bedtime,wake,quality:selSleepQ,hours:+(mins/60).toFixed(1)});
   saveData();document.getElementById('sleepBedtime').value='';document.getElementById('sleepWake').value='';
+  document.getElementById('sleepDate').value=getYesterdayStr();
   selSleepQ=null;document.querySelectorAll('.sq-btn').forEach(b=>b.className='sq-btn');
   renderHealthPage();syncToDropbox();
-  showToast('Sleep logged for last night \uD83D\uDCA4','success');
+  showToast('Sleep logged for '+sleepDate+' \uD83D\uDCA4','success');
 }
 function deleteSleep(id){data.sleep=data.sleep.filter(s=>s.id!==id);saveData();renderHealthPage();pushToDropbox();}
 
@@ -1960,6 +1965,9 @@ function renderHealthPage(){
   document.getElementById('hStatStreak').textContent=streak>0?streak+'d':'—';
   // Render mood for today
   const todayDay=getDayData(today);renderMood(todayDay);renderTRT(todayDay);
+  // Pre-fill sleep date to yesterday by default
+  const sleepDateEl=document.getElementById('sleepDate');
+  if(sleepDateEl&&!sleepDateEl.value)sleepDateEl.value=getYesterdayStr();
   const recentSleep=data.sleep.slice(0,10); // show last 10 entries regardless of date
   document.getElementById('sleepLogList').innerHTML=recentSleep.length?recentSleep.map(s=>`
     <div class="health-log-item">
