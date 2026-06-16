@@ -772,7 +772,8 @@ const MOTIVATIONS=["Small wins compound. Every honest log is a step forward.","Y
 let viewDate=getTodayStr(),data=loadData(),panelMealId=null,panelFullness=null;
 function getTodayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function getYesterdayStr(){const d=new Date();d.setDate(d.getDate()-1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],expenses:[],deletedWatchlistIds:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];if(!d.journal)d.journal=[];if(!d.expenses)d.expenses=[];if(!d.deletedWatchlistIds)d.deletedWatchlistIds=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],expenses:[],deletedWatchlistIds:[]};}}
+function loadData(){try{const d=JSON.parse(localStorage.getItem("fj_data"))||{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],expenses:[],deletedWatchlistIds:[],deletedSleepIds:[],deletedExerciseIds:[],deletedJournalIds:[],deletedExpenseIds:[]};if(!d.watchlist)d.watchlist=[];if(!d.sleep)d.sleep=[];if(!d.exercise)d.exercise=[];if(!d.journal)d.journal=[];if(!d.expenses)d.expenses=[];if(!d.deletedWatchlistIds)d.deletedWatchlistIds=[];if(!d.deletedSleepIds)d.deletedSleepIds=[];if(!d.deletedExerciseIds)d.deletedExerciseIds=[];if(!d.deletedJournalIds)d.deletedJournalIds=[];if(!d.deletedExpenseIds)d.deletedExpenseIds=[];return d;}catch{return{days:{},weight:[],goalWeight:null,watchlist:[],sleep:[],exercise:[],journal:[],expenses:[],deletedWatchlistIds:[],deletedSleepIds:[],deletedExerciseIds:[],deletedJournalIds:[],deletedExpenseIds:[]};}}
+
 function saveData(){localStorage.setItem("fj_data",JSON.stringify(data));checkWeightNag();}
 function getDayData(d){
   if(!data.days[d])data.days[d]={meals:{},reflection:"",closed:false,mood:"",water:0,trt:{}};
@@ -952,7 +953,7 @@ async function pullFromDropbox(){
     const remote=await res.json();
     if(!remote||typeof remote!=="object"){showSyncBar(false,"Invalid data from Dropbox");return;}
     const local=data;
-    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[],sleep:[],exercise:[],journal:[],expenses:[],deletedWatchlistIds:[]};
+    const merged={days:{},weight:[],goalWeight:remote.goalWeight||local.goalWeight,watchlist:[],sleep:[],exercise:[],journal:[],expenses:[],deletedWatchlistIds:[],deletedSleepIds:[],deletedExerciseIds:[],deletedJournalIds:[],deletedExpenseIds:[]};
     // Merge days - for each day pick the version with more water OR more meal entries OR closed status
     const allDays=new Set([...Object.keys(local.days||{}),...Object.keys(remote.days||{})]);
     allDays.forEach(d=>{
@@ -988,28 +989,40 @@ async function pullFromDropbox(){
       if(deletedIds.has(i.id))return;
       if(!wlSeen.has(i.id)){wlSeen.add(i.id);merged.watchlist.push(i);}
     });
-    // Merge sleep — local first
+    // Merge sleep — respect deletions from both devices
+    const deletedSlIds=new Set([...(local.deletedSleepIds||[]),...(remote.deletedSleepIds||[])]);
+    merged.deletedSleepIds=[...deletedSlIds].slice(-500);
     const slSeen=new Set();
     [...(local.sleep||[]),...(remote.sleep||[])].forEach(s=>{
+      if(deletedSlIds.has(s.id))return;
       if(!slSeen.has(s.id)){slSeen.add(s.id);merged.sleep.push(s);}
     });
     merged.sleep.sort((a,b)=>b.date.localeCompare(a.date));
-    // Merge exercise — local first
+    // Merge exercise — respect deletions from both devices
+    const deletedExIds=new Set([...(local.deletedExerciseIds||[]),...(remote.deletedExerciseIds||[])]);
+    merged.deletedExerciseIds=[...deletedExIds].slice(-500);
     const exSeen=new Set();
     [...(local.exercise||[]),...(remote.exercise||[])].forEach(e=>{
+      if(deletedExIds.has(e.id))return;
       if(!exSeen.has(e.id)){exSeen.add(e.id);merged.exercise.push(e);}
     });
     merged.exercise.sort((a,b)=>b.date.localeCompare(a.date));
-    // Merge journal
+    // Merge journal — respect deletions from both devices
+    const deletedJIds=new Set([...(local.deletedJournalIds||[]),...(remote.deletedJournalIds||[])]);
+    merged.deletedJournalIds=[...deletedJIds].slice(-500);
     const jSeen=new Set();
-    [...(remote.journal||[]),...(local.journal||[])].forEach(e=>{
-      if(!jSeen.has(e.id)){jSeen.add(e.id);merged.journal.push(e);}
+    [...(local.journal||[]),...(remote.journal||[])].forEach(j=>{
+      if(deletedJIds.has(j.id))return;
+      if(!jSeen.has(j.id)){jSeen.add(j.id);merged.journal.push(j);}
     });
     merged.journal.sort((a,b)=>b.id-a.id);
-    // Merge expenses
-    const exIdSeen=new Set();
+    // Merge expenses — respect deletions from both devices
+    const deletedEpIds=new Set([...(local.deletedExpenseIds||[]),...(remote.deletedExpenseIds||[])]);
+    merged.deletedExpenseIds=[...deletedEpIds].slice(-500);
+    const epSeen=new Set();
     [...(local.expenses||[]),...(remote.expenses||[])].forEach(e=>{
-      if(!exIdSeen.has(e.id)){exIdSeen.add(e.id);merged.expenses.push(e);}
+      if(deletedEpIds.has(e.id))return;
+      if(!epSeen.has(e.id)){epSeen.add(e.id);merged.expenses.push(e);}
     });
     merged.expenses.sort((a,b)=>b.id-a.id);
     data=merged;
@@ -1644,7 +1657,9 @@ function saveExpense(){
 }
 function deleteExpense(id){
   data.expenses=data.expenses.filter(e=>e.id!==id);
-  saveData();renderExpensesPage();syncToDropbox();
+  if(!data.deletedExpenseIds)data.deletedExpenseIds=[];
+  if(!data.deletedExpenseIds.includes(id)){data.deletedExpenseIds.push(id);if(data.deletedExpenseIds.length>500)data.deletedExpenseIds=data.deletedExpenseIds.slice(-500);}
+  saveData();renderExpensesPage();pushToDropbox();
 }
 function setExpChartFilter(filter,btn){
   expChartFilter=filter;
@@ -1790,7 +1805,9 @@ function saveJournalEntry(){
 }
 function deleteJournalEntry(id){
   data.journal=data.journal.filter(j=>j.id!==id);
-  saveData();renderJournalPage();syncToDropbox();
+  if(!data.deletedJournalIds)data.deletedJournalIds=[];
+  if(!data.deletedJournalIds.includes(id)){data.deletedJournalIds.push(id);if(data.deletedJournalIds.length>500)data.deletedJournalIds=data.deletedJournalIds.slice(-500);}
+  saveData();renderJournalPage();pushToDropbox();
 }
 function renderJournalPage(){
   if(!data.journal)data.journal=[];
@@ -2054,7 +2071,12 @@ function saveSleep(){
   renderHealthPage();syncToDropbox();
   showToast('Sleep logged for last night \uD83D\uDCA4','success');
 }
-function deleteSleep(id){data.sleep=data.sleep.filter(s=>s.id!==id);saveData();renderHealthPage();pushToDropbox();}
+function deleteSleep(id){
+  data.sleep=data.sleep.filter(s=>s.id!==id);
+  if(!data.deletedSleepIds)data.deletedSleepIds=[];
+  if(!data.deletedSleepIds.includes(id)){data.deletedSleepIds.push(id);if(data.deletedSleepIds.length>500)data.deletedSleepIds=data.deletedSleepIds.slice(-500);}
+  saveData();renderHealthPage();pushToDropbox();
+}
 
 let sleepEditQ=null;
 function openSleepEdit(id){
@@ -2099,7 +2121,12 @@ function saveExercise(){
   document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
   renderHealthPage();syncToDropbox();showToast('Workout logged! \uD83D\uDCAA','success');
 }
-function deleteExercise(id){data.exercise=data.exercise.filter(e=>e.id!==id);saveData();renderHealthPage();syncToDropbox();}
+function deleteExercise(id){
+  data.exercise=data.exercise.filter(e=>e.id!==id);
+  if(!data.deletedExerciseIds)data.deletedExerciseIds=[];
+  if(!data.deletedExerciseIds.includes(id)){data.deletedExerciseIds.push(id);if(data.deletedExerciseIds.length>500)data.deletedExerciseIds=data.deletedExerciseIds.slice(-500);}
+  saveData();renderHealthPage();pushToDropbox();
+}
 function setHealthChartView(view,btn){
   healthChartView=view;
   document.getElementById('hChartToggleSleep').classList.toggle('active',view==='sleep');
