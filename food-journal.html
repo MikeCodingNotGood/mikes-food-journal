@@ -2080,8 +2080,11 @@ function renderHealthChart(){
     canvas.style.display='block';emptyEl.style.display='none';
     healthChart=new Chart(canvas,{type:'bar',data:{labels:entries.map(s=>new Date(s.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Hours Slept',data:entries.map(s=>s.hours),backgroundColor:entries.map(s=>s.quality==='great'?'rgba(16,185,129,0.8)':s.quality==='okay'?'rgba(245,158,11,0.8)':'rgba(239,68,68,0.8)'),borderColor:entries.map(s=>s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'),borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#22263a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,callbacks:{label:ctx=>{const e=entries[ctx.dataIndex];return `${ctx.parsed.y}h \u00B7 ${e.quality} \u00B7 ${e.bedtime}\u2013${e.wake}`;}}}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10},maxTicksLimit:12},grid:{color:'rgba(255,255,255,0.04)'}},y:{beginAtZero:true,max:12,ticks:{color:'#94a3b8',font:{size:10},callback:v=>v+'h'},grid:{color:'rgba(255,255,255,0.04)'}}}}});
   } else if(healthChartView==='alcohol'){
+    // Include all days with any activity, showing 0 for days with no drinks
     const days=data.days||{};
-    let entries=Object.entries(days).filter(([d,day])=>(day.alcohol||0)>0).map(([d,day])=>({date:d,count:day.alcohol})).sort((a,b)=>a.date.localeCompare(b.date));
+    let entries=Object.entries(days)
+      .map(([d,day])=>({date:d,count:day.alcohol||0}))
+      .sort((a,b)=>a.date.localeCompare(b.date));
     if(cutoff)entries=entries.filter(e=>new Date(e.date+'T12:00:00')>=cutoff);
     if(!entries.length){canvas.style.display='none';emptyEl.style.display='block';return;}
     canvas.style.display='block';emptyEl.style.display='none';
