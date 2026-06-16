@@ -220,14 +220,8 @@
       <span style="font-size:22px">&#x1F985;</span>
       <div><h1>Mike's Vault</h1><div class="sub">Your life. Logged.</div></div>
     </div>
+    <div id="holidayBanner" style="display:none;flex:1;text-align:center;font-size:14px;font-weight:600;color:var(--text)"></div>
     <div class="header-right">
-      <div id="weatherHeader" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);margin-right:8px">
-        <span id="weatherHeaderIcon" style="font-size:18px">⛅</span>
-        <div>
-          <span id="weatherHeaderTemp" style="font-weight:700;color:var(--text)">--°F</span>
-          <span id="weatherHeaderDesc" style="margin-left:4px;font-size:12px"> Loading...</span>
-        </div>
-      </div>
       <div class="streak-badge" id="streakBadge">&#x1F525; <span id="streakCount">0</span> day streak</div>
       <button class="btn btn-ghost btn-sm" onclick="syncToDropbox()">&#x2601; Sync</button>
     </div>
@@ -255,6 +249,21 @@
         <button onclick="changeDay(1)">&#8594;</button>
       </div>
     </div>
+    <!-- Weather card -->
+    <div id="weatherCard" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="weatherIcon" style="font-size:28px">⛅</div>
+        <div>
+          <div id="weatherTemp" style="font-size:20px;font-weight:700;color:var(--text)">--°F</div>
+          <div id="weatherDesc" style="font-size:12px;color:var(--text2);text-transform:capitalize">Loading weather...</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div id="weatherHiLo" style="font-size:12px;color:var(--text2)">H: -- L: --</div>
+        <div id="weatherLocation" style="font-size:11px;color:var(--text3);margin-top:2px"></div>
+        <div id="weatherHumidity" style="font-size:11px;color:var(--text3)"></div>
+      </div>
+    </div>
     <div class="hero-stats">
       <div class="hero-stat"><div class="hv hv-blue" id="statMeals">0</div><div class="hl">Meals logged</div></div>
       <div class="hero-stat"><div class="hv hv-green" id="statFull">&#8212;</div><div class="hl">Felt full</div></div>
@@ -273,7 +282,7 @@
           <div style="font-size:36px;font-weight:700;color:#a78bfa" id="alcoholTally">0</div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <button onclick="changeAlcohol(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid rgba(167,139,250,0.4);background:rgba(167,139,250,0.15);color:#a78bfa;font-size:18px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;">+</button>
-            <button onclick="changeAlcohol(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:18px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;">-</button>
+            <button onclick="changeAlcohol(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-size:18px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;">−</button>
           </div>
         </div>
         <div class="tc-sub" id="alcoholSub">Tap + to log a drink</div>
@@ -379,10 +388,6 @@
     <div class="health-grid">
       <div class="health-card">
         <div class="health-card-title hc-teal">&#x1F4A4; Sleep Log</div>
-        <div style="margin-bottom:10px">
-          <div style="font-size:10px;color:var(--text2);margin-bottom:4px">Which night?</div>
-          <input type="date" id="sleepDate" class="dark-input" style="width:100%;padding:6px 8px;font-size:13px" />
-        </div>
         <div class="time-inputs">
           <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">Bedtime</div><input type="time" id="sleepBedtime" class="dark-input" style="width:110px;padding:6px 8px;font-size:13px" /></div>
           <span style="margin-top:16px">&#8594;</span>
@@ -521,6 +526,17 @@
 
   <div id="page-settings" class="main hidden">
     <div class="date-bar"><h2>Settings</h2></div>
+    <div class="settings-section">
+      <h3>Personal Holidays</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Add birthdays, anniversaries, or any day you want to celebrate in the header.</p>
+      <div style="display:grid;grid-template-columns:1fr 60px 60px auto;gap:8px;margin-bottom:10px;align-items:center">
+        <input type="text" id="holidayName" class="dark-input" placeholder="e.g. Mike's Birthday 🎂" />
+        <input type="number" id="holidayMonth" class="dark-input" placeholder="Mo" min="1" max="12" style="text-align:center" />
+        <input type="number" id="holidayDay" class="dark-input" placeholder="Day" min="1" max="31" style="text-align:center" />
+        <button class="btn btn-blue btn-sm" onclick="addPersonalHoliday()">+ Add</button>
+      </div>
+      <div id="personalHolidaysList"></div>
+    </div>
     <div class="settings-section">
       <h3>Goal Weight</h3>
       <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:6px;">
@@ -663,28 +679,6 @@
   </div>
 </div>
 
-<div id="sleepEditModal" class="modal-wrap hidden">
-  <div class="modal" style="max-width:400px">
-    <h3>&#x270F;&#xFE0F; Edit Sleep Entry</h3>
-    <input type="hidden" id="sleepEditId" />
-    <div class="time-inputs" style="margin-bottom:10px">
-      <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">Bedtime</div><input type="time" id="sleepEditBedtime" class="dark-input" style="width:110px;padding:6px 8px;font-size:13px" /></div>
-      <span style="margin-top:16px">&#8594;</span>
-      <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">Wake time</div><input type="time" id="sleepEditWake" class="dark-input" style="width:110px;padding:6px 8px;font-size:13px" /></div>
-    </div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Sleep quality</div>
-    <div class="sleep-quality-btns" id="sleepEditQBtns">
-      <button class="sq-btn" data-q="great" onclick="selSleepEditQ('great')">&#x1F60A; Great</button>
-      <button class="sq-btn" data-q="okay"  onclick="selSleepEditQ('okay')">&#x1F610; Okay</button>
-      <button class="sq-btn" data-q="rough" onclick="selSleepEditQ('rough')">&#x1F629; Rough</button>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeSleepEdit()">Cancel</button>
-      <button class="btn btn-blue"  onclick="saveSleepEdit()">Save Changes</button>
-    </div>
-  </div>
-</div>
-
 <div id="toast" class="toast"></div>
 
 <!-- Quick Add Meal Picker Modal -->
@@ -783,7 +777,88 @@ function showApp(){
   document.getElementById("dropboxStatus").textContent=getRefreshToken()?"Connected \u2713 (auto-refresh enabled)":"No token \u2014 local only";
   if(data.goalWeight)document.getElementById("goalWeightInput").value=data.goalWeight;
   renderToday();updateStreak();checkWeightNag();renderQuickAddChips();
-  fetchWeather();
+  fetchWeather();checkHoliday();
+}
+
+// HOLIDAYS
+const HOLIDAYS_FIXED=[
+  // US Federal
+  {month:1,day:1,name:"Happy New Year! 🎆"},
+  {month:1,day:20,name:"Martin Luther King Jr. Day 🕊️"},
+  {month:2,day:17,name:"Presidents' Day 🇺🇸"},
+  {month:5,day:26,name:"Memorial Day 🪖"},
+  {month:6,day:19,name:"Juneteenth 🎉"},
+  {month:7,day:4,name:"Happy 4th of July! 🎇"},
+  {month:9,day:1,name:"Labor Day 👷"},
+  {month:10,day:13,name:"Columbus Day"},
+  {month:11,day:11,name:"Veterans Day 🎖️"},
+  {month:11,day:27,name:"Happy Thanksgiving! 🦃"},
+  {month:12,day:25,name:"Merry Christmas! 🎄"},
+  // Fun ones
+  {month:1,day:15,name:"National Hat Day 🎩"},
+  {month:2,day:2,name:"Groundhog Day 🦔"},
+  {month:2,day:14,name:"Happy Valentine's Day! ❤️"},
+  {month:3,day:14,name:"Pi Day 🥧"},
+  {month:3,day:17,name:"Happy St. Patrick's Day! 🍀"},
+  {month:4,day:1,name:"April Fools' Day 🤡"},
+  {month:4,day:22,name:"Earth Day 🌍"},
+  {month:5,day:4,name:"May the 4th Be With You 🚀"},
+  {month:5,day:5,name:"Cinco de Mayo 🌮"},
+  {month:6,day:21,name:"First Day of Summer ☀️"},
+  {month:9,day:22,name:"First Day of Fall 🍂"},
+  {month:10,day:31,name:"Happy Halloween! 🎃"},
+  {month:11,day:1,name:"Happy Day After Halloween 😅"},
+  {month:12,day:21,name:"First Day of Winter ❄️"},
+  {month:12,day:31,name:"New Year's Eve! 🥂"},
+];
+function getPersonalHolidays(){const s=localStorage.getItem('fj_personal_holidays');return s?JSON.parse(s):[];}
+function savePersonalHolidays(arr){localStorage.setItem('fj_personal_holidays',JSON.stringify(arr));}
+function checkHoliday(){
+  const now=new Date();
+  const month=now.getMonth()+1;
+  const day=now.getDate();
+  const allHolidays=[...HOLIDAYS_FIXED,...getPersonalHolidays()];
+  const today=allHolidays.find(h=>h.month===month&&h.day===day);
+  const banner=document.getElementById('holidayBanner');
+  if(today){
+    banner.textContent=today.name;
+    banner.style.display='block';
+  } else {
+    banner.style.display='none';
+  }
+}
+function renderPersonalHolidaysList(){
+  const list=document.getElementById('personalHolidaysList');if(!list)return;
+  const holidays=getPersonalHolidays();
+  if(!holidays.length){list.innerHTML='<div style="font-size:13px;color:var(--text2);font-style:italic">No personal holidays yet.</div>';return;}
+  list.innerHTML='<div class="settings-tag-wrap">'+holidays.map((h,i)=>
+    `<span class="settings-tag">${h.name} (${h.month}/${h.day})<button class="settings-tag-x" onclick="removePersonalHoliday(${i})">&#x2715;</button></span>`
+  ).join('')+'</div>';
+}
+function addPersonalHoliday(){
+  const name=document.getElementById('holidayName').value.trim();
+  const month=parseInt(document.getElementById('holidayMonth').value);
+  const day=parseInt(document.getElementById('holidayDay').value);
+  if(!name){showToast('Enter a holiday name.','error');return;}
+  if(!month||month<1||month>12){showToast('Enter a valid month (1-12).','error');return;}
+  if(!day||day<1||day>31){showToast('Enter a valid day.','error');return;}
+  const holidays=getPersonalHolidays();
+  holidays.push({month,day,name});
+  savePersonalHolidays(holidays);
+  document.getElementById('holidayName').value='';
+  document.getElementById('holidayMonth').value='';
+  document.getElementById('holidayDay').value='';
+  renderPersonalHolidaysList();
+  checkHoliday();
+  showToast('"'+name+'" added!','success');
+}
+function removePersonalHoliday(idx){
+  const holidays=getPersonalHolidays();
+  holidays.splice(idx,1);
+  savePersonalHolidays(holidays);
+  renderPersonalHolidaysList();
+  checkHoliday();
+  showToast('Holiday removed.','success');
 }
 
 // WEATHER
@@ -795,7 +870,7 @@ const weatherIcons={
 };
 function fetchWeather(){
   if(!navigator.geolocation){
-    document.getElementById("weatherHeaderDesc").textContent="Location unavailable";
+    document.getElementById("weatherDesc").textContent="Location not available";
     return;
   }
   navigator.geolocation.getCurrentPosition(async pos=>{
@@ -803,7 +878,7 @@ function fetchWeather(){
     try{
       const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${OWM_KEY}`);
       const d=await res.json();
-      if(d.cod!==200){document.getElementById("weatherHeaderDesc").textContent="Weather unavailable";return;}
+      if(d.cod!==200){document.getElementById("weatherDesc").textContent="Weather unavailable";return;}
       const icon=weatherIcons[d.weather[0].icon]||"🌡️";
       const temp=Math.round(d.main.temp);
       const hi=Math.round(d.main.temp_max);
@@ -811,14 +886,17 @@ function fetchWeather(){
       const desc=d.weather[0].description;
       const humidity=d.main.humidity;
       const city=d.name;
-      document.getElementById("weatherHeaderIcon").textContent=icon;
-      document.getElementById("weatherHeaderTemp").textContent=temp+"°F";
-      document.getElementById("weatherHeaderDesc").textContent=d.weather[0].description;
+      document.getElementById("weatherIcon").textContent=icon;
+      document.getElementById("weatherTemp").textContent=temp+"°F";
+      document.getElementById("weatherDesc").textContent=desc;
+      document.getElementById("weatherHiLo").textContent="H: "+hi+"° L: "+lo+"°";
+      document.getElementById("weatherLocation").textContent=city;
+      document.getElementById("weatherHumidity").textContent="Humidity: "+humidity+"%";
     }catch(e){
-      document.getElementById("weatherHeaderDesc").textContent="Unavailable";
+      document.getElementById("weatherDesc").textContent="Weather unavailable";
     }
   },()=>{
-    document.getElementById("weatherHeaderDesc").textContent="Allow location";
+    document.getElementById("weatherDesc").textContent="Allow location for weather";
   },{timeout:8000});
 }
 async function pullFromDropbox(){
@@ -939,7 +1017,7 @@ function showTab(tab){
   if(tab==="health")renderHealthPage();
   if(tab==="journal"){renderJournalPage();renderWeeklySummary();}
   if(tab==="expenses")renderExpensesPage();
-  if(tab==="settings"){renderCustomCats();renderQaSettingsList();renderExpCatSettingsList();}
+  if(tab==="settings"){renderCustomCats();renderQaSettingsList();renderExpCatSettingsList();renderPersonalHolidaysList();}
 }
 function changeDay(d){const dt=new Date(viewDate+"T12:00:00");dt.setDate(dt.getDate()+d);viewDate=dt.toISOString().slice(0,10);renderToday();}
 function goToday(){viewDate=getTodayStr();renderToday();}
@@ -972,6 +1050,7 @@ function renderWater(day){
     d.textContent="\uD83D\uDCA7";d.onclick=()=>toggleWater(i);wrap.appendChild(d);
   }
 }
+function toggleWater(idx){const day=getDayData(viewDate);day.water=idx<day.water?idx:idx+1;saveData();renderWater(day);syncToDropbox();}
 function renderAlcohol(day){
   const count=day.alcohol||0;
   document.getElementById('alcoholTally').textContent=count;
@@ -981,18 +1060,7 @@ function renderAlcohol(day){
 function changeAlcohol(delta){
   const day=getDayData(viewDate);
   day.alcohol=Math.max(0,(day.alcohol||0)+delta);
-  saveData();renderAlcohol(day);
-  // Push directly without pulling first to avoid overwrite
-  pushToDropbox();
-}
-function toggleWater(idx){
-  const day=getDayData(viewDate);
-  const current=day.water||0;
-  if(idx===current-1){day.water=current-1;}
-  else{day.water=idx+1;}
-  saveData();renderWater(day);
-  // Push directly without pulling first to avoid overwrite
-  pushToDropbox();
+  saveData();renderAlcohol(day);syncToDropbox();
 }
 function renderTRT(day){
   const wrap=document.getElementById("trtDays");wrap.innerHTML="";
@@ -1255,7 +1323,7 @@ function renderHistory(){
     const journalEntries=(data.journal||[]).filter(j=>j.date===d);
     const expenseEntries=(data.expenses||[]).filter(e=>e.date===d);
     const trtDone=Object.values(day.trt||{}).filter(Boolean).length;
-    const totalActivity=mealCount+(day.water>0?1:0)+(day.alcohol>0?1:0)+weightEntries.length+randomItems.length+(trtDone>0?1:0)+sleepEntries.length+exerciseEntries.length+journalEntries.length+expenseEntries.length+(day.mood?1:0);
+    const totalActivity=mealCount+(day.water||0)+(day.alcohol||0)+weightEntries.length+randomItems.length+trtDone+sleepEntries.length+exerciseEntries.length+journalEntries.length+expenseEntries.length;
     if(!totalActivity)return"";
 
     let sections="";
@@ -1491,7 +1559,7 @@ function saveExpense(){
 }
 function deleteExpense(id){
   data.expenses=data.expenses.filter(e=>e.id!==id);
-  saveData();renderExpensesPage();pushToDropbox();
+  saveData();renderExpensesPage();syncToDropbox();
 }
 function setExpChartFilter(filter,btn){
   expChartFilter=filter;
@@ -1637,7 +1705,7 @@ function saveJournalEntry(){
 }
 function deleteJournalEntry(id){
   data.journal=data.journal.filter(j=>j.id!==id);
-  saveData();renderJournalPage();pushToDropbox();
+  saveData();renderJournalPage();syncToDropbox();
 }
 function renderJournalPage(){
   if(!data.journal)data.journal=[];
@@ -1812,7 +1880,7 @@ function saveItem(){
   saveData();closeAddItem();renderWatchlist();syncToDropbox();
   showToast(title+' saved to My List!','success');
 }
-function toggleItem(id){const item=data.watchlist.find(i=>i.id===id);if(item){item.done=!item.done;saveData();renderWatchlist();pushToDropbox();}}
+function toggleItem(id){const item=data.watchlist.find(i=>i.id===id);if(item){item.done=!item.done;saveData();renderWatchlist();syncToDropbox();}}
 function deleteItem(id){
   data.watchlist=data.watchlist.filter(i=>i.id!==id);
   if(!data.deletedWatchlistIds)data.deletedWatchlistIds=[];
@@ -1821,7 +1889,7 @@ function deleteItem(id){
     // Keep list from growing forever — cap at 500
     if(data.deletedWatchlistIds.length>500)data.deletedWatchlistIds=data.deletedWatchlistIds.slice(-500);
   }
-  saveData();renderWatchlist();pushToDropbox();
+  saveData();renderWatchlist();syncToDropbox();
 }
 function deleteCat(cat){
   if(!confirm('Remove "'+cat+'" from the list? Items saved under it are kept.'))return;
@@ -1891,49 +1959,16 @@ function saveSleep(){
   if(!selSleepQ){showToast('Pick a sleep quality first.','error');return;}
   const [bh,bm]=bedtime.split(':').map(Number),[wh,wm]=wake.split(':').map(Number);
   let mins=(wh*60+wm)-(bh*60+bm);if(mins<0)mins+=1440;
-  // Use selected date, default to yesterday
-  const sleepDate=document.getElementById('sleepDate').value||getYesterdayStr();
+  // Always save to yesterday — you're always logging last night's sleep
+  const sleepDate=getYesterdayStr();
   if(!data.sleep)data.sleep=[];
   data.sleep.unshift({id:Date.now(),date:sleepDate,bedtime,wake,quality:selSleepQ,hours:+(mins/60).toFixed(1)});
   saveData();document.getElementById('sleepBedtime').value='';document.getElementById('sleepWake').value='';
-  document.getElementById('sleepDate').value=getYesterdayStr();
   selSleepQ=null;document.querySelectorAll('.sq-btn').forEach(b=>b.className='sq-btn');
   renderHealthPage();syncToDropbox();
-  showToast('Sleep logged for '+sleepDate+' \uD83D\uDCA4','success');
+  showToast('Sleep logged for last night \uD83D\uDCA4','success');
 }
-function deleteSleep(id){data.sleep=data.sleep.filter(s=>s.id!==id);saveData();renderHealthPage();pushToDropbox();}
-
-let sleepEditQ=null;
-function openSleepEdit(id){
-  const entry=data.sleep.find(s=>s.id===id);if(!entry)return;
-  document.getElementById('sleepEditId').value=id;
-  document.getElementById('sleepEditBedtime').value=entry.bedtime;
-  document.getElementById('sleepEditWake').value=entry.wake;
-  sleepEditQ=entry.quality;
-  document.querySelectorAll('#sleepEditQBtns .sq-btn').forEach(b=>{
-    b.className='sq-btn';
-    if(b.dataset.q===entry.quality)b.classList.add('sel-'+entry.quality);
-  });
-  document.getElementById('sleepEditModal').classList.remove('hidden');
-}
-function selSleepEditQ(q){
-  sleepEditQ=q;
-  document.querySelectorAll('#sleepEditQBtns .sq-btn').forEach(b=>{b.className='sq-btn';if(b.dataset.q===q)b.classList.add('sel-'+q);});
-}
-function closeSleepEdit(){document.getElementById('sleepEditModal').classList.add('hidden');sleepEditQ=null;}
-function saveSleepEdit(){
-  const id=parseInt(document.getElementById('sleepEditId').value);
-  const bedtime=document.getElementById('sleepEditBedtime').value;
-  const wake=document.getElementById('sleepEditWake').value;
-  if(!bedtime||!wake){showToast('Enter both times.','error');return;}
-  if(!sleepEditQ){showToast('Pick a quality.','error');return;}
-  const [bh,bm]=bedtime.split(':').map(Number),[wh,wm]=wake.split(':').map(Number);
-  let mins=(wh*60+wm)-(bh*60+bm);if(mins<0)mins+=1440;
-  const entry=data.sleep.find(s=>s.id===id);
-  if(entry){entry.bedtime=bedtime;entry.wake=wake;entry.quality=sleepEditQ;entry.hours=+(mins/60).toFixed(1);}
-  saveData();closeSleepEdit();renderHealthPage();pushToDropbox();
-  showToast('Sleep entry updated \uD83D\uDCA4','success');
-}
+function deleteSleep(id){data.sleep=data.sleep.filter(s=>s.id!==id);saveData();renderHealthPage();syncToDropbox();}
 function saveExercise(){
   const dur=parseInt(document.getElementById('exDuration').value);
   if(!selActT){showToast('Pick an activity type first.','error');return;}
@@ -1944,7 +1979,7 @@ function saveExercise(){
   document.querySelectorAll('.act-btn').forEach(b=>b.classList.remove('sel'));
   renderHealthPage();syncToDropbox();showToast('Workout logged! \uD83D\uDCAA','success');
 }
-function deleteExercise(id){data.exercise=data.exercise.filter(e=>e.id!==id);saveData();renderHealthPage();pushToDropbox();}
+function deleteExercise(id){data.exercise=data.exercise.filter(e=>e.id!==id);saveData();renderHealthPage();syncToDropbox();}
 function setHealthChartView(view,btn){
   healthChartView=view;
   document.getElementById('hChartToggleSleep').classList.toggle('active',view==='sleep');
@@ -1965,23 +2000,8 @@ function renderHealthPage(){
   document.getElementById('hStatStreak').textContent=streak>0?streak+'d':'—';
   // Render mood for today
   const todayDay=getDayData(today);renderMood(todayDay);renderTRT(todayDay);
-  // Pre-fill sleep date to yesterday by default
-  const sleepDateEl=document.getElementById('sleepDate');
-  if(sleepDateEl&&!sleepDateEl.value)sleepDateEl.value=getYesterdayStr();
-  const recentSleep=data.sleep.slice(0,10); // show last 10 entries regardless of date
-  document.getElementById('sleepLogList').innerHTML=recentSleep.length?recentSleep.map(s=>`
-    <div class="health-log-item">
-      <div>
-        <span style="font-weight:700;color:${s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'}">${qLabel[s.quality]}</span>
-        <span style="color:var(--text2);font-size:12px;margin-left:6px">${s.bedtime} \u2192 ${s.wake} \u00B7 ${s.hours}h</span>
-        <span style="color:var(--text3);font-size:11px;margin-left:6px">${formatLabel(s.date)}</span>
-      </div>
-      <div style="display:flex;gap:4px">
-        <button class="health-log-del" onclick="openSleepEdit(${s.id})" title="Edit" style="color:var(--blue)">&#x270F;</button>
-        <button class="health-log-del" onclick="deleteSleep(${s.id})" title="Delete">&#x2715;</button>
-      </div>
-    </div>`).join('')
-    :'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged yet</div>';
+  const todaySleep=data.sleep.filter(s=>s.date===today);
+  document.getElementById('sleepLogList').innerHTML=todaySleep.length?todaySleep.map(s=>`<div class="health-log-item"><div><span style="font-weight:700;color:${s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'}">${qLabel[s.quality]}</span><span style="color:var(--text2);font-size:12px;margin-left:6px">${s.bedtime} \u2192 ${s.wake} \u00B7 ${s.hours}h</span></div><button class="health-log-del" onclick="deleteSleep(${s.id})">&#x2715;</button></div>`).join(''):'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged yet tonight</div>';
   const todayEx=data.exercise.filter(e=>e.date===today);
   document.getElementById('exerciseLogList').innerHTML=todayEx.length?todayEx.map(e=>`<div class="health-log-item"><div><span style="font-weight:700;color:#f97316">${e.type}</span><span style="color:var(--text2);font-size:12px;margin-left:6px">${e.duration} min \u00B7 ${e.time}</span></div><button class="health-log-del" onclick="deleteExercise(${e.id})">&#x2715;</button></div>`).join(''):'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged today</div>';
   renderHealthChart();
