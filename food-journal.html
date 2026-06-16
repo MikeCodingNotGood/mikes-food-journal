@@ -1960,19 +1960,20 @@ function renderHealthPage(){
   document.getElementById('hStatStreak').textContent=streak>0?streak+'d':'—';
   // Render mood for today
   const todayDay=getDayData(today);renderMood(todayDay);renderTRT(todayDay);
-  const todaySleep=data.sleep.filter(s=>s.date===today);
-  document.getElementById('sleepLogList').innerHTML=todaySleep.length?todaySleep.map(s=>`
+  const recentSleep=data.sleep.slice(0,10); // show last 10 entries regardless of date
+  document.getElementById('sleepLogList').innerHTML=recentSleep.length?recentSleep.map(s=>`
     <div class="health-log-item">
       <div>
         <span style="font-weight:700;color:${s.quality==='great'?'#10b981':s.quality==='okay'?'#f59e0b':'#ef4444'}">${qLabel[s.quality]}</span>
         <span style="color:var(--text2);font-size:12px;margin-left:6px">${s.bedtime} \u2192 ${s.wake} \u00B7 ${s.hours}h</span>
+        <span style="color:var(--text3);font-size:11px;margin-left:6px">${formatLabel(s.date)}</span>
       </div>
       <div style="display:flex;gap:4px">
         <button class="health-log-del" onclick="openSleepEdit(${s.id})" title="Edit" style="color:var(--blue)">&#x270F;</button>
         <button class="health-log-del" onclick="deleteSleep(${s.id})" title="Delete">&#x2715;</button>
       </div>
     </div>`).join('')
-    :'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged yet tonight</div>';
+    :'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged yet</div>';
   const todayEx=data.exercise.filter(e=>e.date===today);
   document.getElementById('exerciseLogList').innerHTML=todayEx.length?todayEx.map(e=>`<div class="health-log-item"><div><span style="font-weight:700;color:#f97316">${e.type}</span><span style="color:var(--text2);font-size:12px;margin-left:6px">${e.duration} min \u00B7 ${e.time}</span></div><button class="health-log-del" onclick="deleteExercise(${e.id})">&#x2715;</button></div>`).join(''):'<div style="font-size:12px;color:var(--text3);font-style:italic">Nothing logged today</div>';
   renderHealthChart();
