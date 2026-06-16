@@ -1482,15 +1482,60 @@ function showSyncBar(ok,msg){
   setTimeout(()=>bar.classList.add("hidden"),5000);
 }
 function exportCSV(){
-  const rows=[["Date","Meal","What I Ate","Fullness","Time","Mood","Water"]];
+  const q=s=>s?`"${String(s).replace(/"/g,'""')}"`:""
+  const rows=[];
+
+  // FOOD
+  rows.push(["--- FOOD ---"]);
+  rows.push(["Date","Meal","What I Ate","Fullness","Time","Mood","Water","Drinks"]);
   Object.keys(data.days).sort().forEach(d=>{
     const day=data.days[d];
-    MEALS.forEach(m=>(day.meals?.[m.id]||[]).forEach(e=>rows.push([d,m.label,`"${e.food.replace(/"/g,'""')}"`,e.fullness||"",e.time||"",day.mood||"",day.water||0])));
+    const mealEntries=[];
+    MEALS.forEach(m=>(day.meals?.[m.id]||[]).forEach(e=>mealEntries.push([d,m.label,q(e.food),e.fullness||"",e.time||"",day.mood||"",day.water||0,day.alcohol||0])));
+    if(mealEntries.length)mealEntries.forEach(r=>rows.push(r));
+    else if(day.mood||day.water||day.alcohol)rows.push([d,"","","","",day.mood||"",day.water||0,day.alcohol||0]);
   });
-  data.weight.forEach(w=>rows.push([w.date,"Weight",w.weight+" lbs","","","",""]));
+
+  // WEIGHT
+  rows.push([]);
+  rows.push(["--- WEIGHT ---"]);
+  rows.push(["Date","Weight","Time"]);
+  (data.weight||[]).forEach(w=>rows.push([w.date,w.weight+" lbs",w.time||""]));
+
+  // SLEEP
+  rows.push([]);
+  rows.push(["--- SLEEP ---"]);
+  rows.push(["Date","Bedtime","Wake","Hours","Quality"]);
+  (data.sleep||[]).forEach(s=>rows.push([s.date,s.bedtime,s.wake,s.hours,s.quality]));
+
+  // EXERCISE
+  rows.push([]);
+  rows.push(["--- EXERCISE ---"]);
+  rows.push(["Date","Type","Duration (min)","Time"]);
+  (data.exercise||[]).forEach(e=>rows.push([e.date,e.type,e.duration,e.time||""]));
+
+  // EXPENSES
+  rows.push([]);
+  rows.push(["--- EXPENSES ---"]);
+  rows.push(["Date","Description","Amount","Payment","Category","Time"]);
+  (data.expenses||[]).forEach(e=>rows.push([e.date,q(e.desc),"$"+e.amount.toFixed(2),e.payment,e.category,e.time||""]));
+
+  // JOURNAL
+  rows.push([]);
+  rows.push(["--- JOURNAL ---"]);
+  rows.push(["Date","Time","Entry"]);
+  (data.journal||[]).forEach(j=>rows.push([j.date,j.time||"",q(j.text)]));
+
+  // RANDOM LIST
+  rows.push([]);
+  rows.push(["--- RANDOM LIST ---"]);
+  rows.push(["Date Added","Category","Title","From","Note","Done"]);
+  (data.watchlist||[]).forEach(i=>rows.push([i.added,i.cat,q(i.title),q(i.rec||""),q(i.note||""),i.done?"Yes":"No"]));
+
   const blob=new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"});
-  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="food-journal.csv";a.click();URL.revokeObjectURL(url);
-  showToast("CSV downloaded!","success");
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="mikes-vault-export.csv";a.click();URL.revokeObjectURL(url);
+  showToast("Full export downloaded!","success");
 }
 function confirmClearData(){
   if(confirm("Delete all local data? Cannot be undone.")){localStorage.removeItem("fj_data");data={days:{},weight:[],goalWeight:null};renderToday();showToast("Local data cleared.","");}
