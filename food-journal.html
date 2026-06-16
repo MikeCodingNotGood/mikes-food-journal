@@ -529,11 +529,21 @@
     <div class="settings-section">
       <h3>Personal Holidays</h3>
       <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Add birthdays, anniversaries, or any day you want to celebrate in the header.</p>
-      <div style="display:grid;grid-template-columns:1fr 60px 60px auto;gap:8px;margin-bottom:10px;align-items:center">
-        <input type="text" id="holidayName" class="dark-input" placeholder="e.g. Mike's Birthday 🎂" />
-        <input type="number" id="holidayMonth" class="dark-input" placeholder="Mo" min="1" max="12" style="text-align:center" />
-        <input type="number" id="holidayDay" class="dark-input" placeholder="Day" min="1" max="31" style="text-align:center" />
-        <button class="btn btn-blue btn-sm" onclick="addPersonalHoliday()">+ Add</button>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
+        <input type="text" id="holidayName" class="dark-input" placeholder="e.g. Mike's Birthday 🎂" style="width:100%" />
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Month (1–12)</div>
+            <input type="number" id="holidayMonth" class="dark-input" placeholder="e.g. 8" min="1" max="12" style="width:100%" />
+          </div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Day</div>
+            <input type="number" id="holidayDay" class="dark-input" placeholder="e.g. 4" min="1" max="31" style="width:100%" />
+          </div>
+          <div style="margin-top:18px">
+            <button class="btn btn-blue btn-sm" onclick="addPersonalHoliday()">+ Add</button>
+          </div>
+        </div>
       </div>
       <div id="personalHolidaysList"></div>
     </div>
